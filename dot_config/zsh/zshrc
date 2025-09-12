@@ -10,3 +10,6 @@ source ~/.config/zsh/function.zsh
 
 # Bitwarden SSH Agent
 export SSH_AUTH_SOCK=/Users/antoaenono/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock
+
+# Tealdeer
+export TEALDEER_CONFIG_DIR=/Users/antoaenono/.config/tealdeer
