@@ -1,2 +1,6 @@
+# Default PATH
+PATH=/usr/bin:/bin:/usr/sbin:/sbin
+
 # Set PATH for Homebrew
 eval "$(/opt/homebrew/bin/brew shellenv)"
+

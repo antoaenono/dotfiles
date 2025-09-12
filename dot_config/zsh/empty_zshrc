@@ -1,7 +1,0 @@
-# aliases
-source ~/.config/zsh/alias.zsh
-
-# functions
-source ~/.config/zsh/function.zsh # loaded at startup
-#fpath=(~/.config/zsh/functions $fpath)
-#autoload -Uz mkd # lazy loading

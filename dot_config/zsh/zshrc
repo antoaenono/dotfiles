@@ -1,0 +1,12 @@
+# Aliases
+source ~/.config/zsh/alias.zsh
+
+# Functions
+## Load at startup
+source ~/.config/zsh/function.zsh
+## Lazy loading every function file from a functions dir
+#fpath=(~/.config/zsh/functions $fpath)
+#autoload -Uz <fn_name>
+
+# Bitwarden SSH Agent
+export SSH_AUTH_SOCK=/Users/antoaenono/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock
