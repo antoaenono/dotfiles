@@ -1,0 +1,2 @@
+[scriptEnv]
+    VAR_IN_SCRIPT = "a_value"
