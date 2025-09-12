@@ -1,0 +1,7 @@
+packages:
+  darwin:
+    brews:
+      - "wget"
+    casks:
+      - "ghostty"
+      - "zed"
