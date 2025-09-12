@@ -1,6 +1,8 @@
-{{ if eq .chezmoi.os "darwin" -}}
-#!/bin/sh
-brew install --cask ghostty
-brew install --cask zed
-{{ end -}}
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
 
+brew bundle --file=/dev/stdin <<EOF
+cask "ghostty"
+cask "zed"
+EOF
+{{ end -}}

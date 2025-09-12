@@ -1,3 +1,10 @@
+[gpg]
+  format = ssh
 [user]
+  signingkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDrh0nNrnRAx6jlTTIzg2PEMyT6CXw21pF//cVQugzbf"
   name = "Anton Bilbaeno"
   email = "antoaenono@pm.me"
+[commit]
+  gpgsign = true
+[gpg "ssh"]
+	allowedSignersFile = /Users/antoaenono/.ssh/allowedSigners
