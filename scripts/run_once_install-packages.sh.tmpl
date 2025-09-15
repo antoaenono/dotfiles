@@ -1,6 +1,7 @@
 {{ if eq .chezmoi.os "darwin" -}}
 #!/bin/bash
 
+# bundle multiple formulas (text) and casks (graphical)
 brew bundle --file=/dev/stdin <<EOF
 {{ range .packages.darwin.brews -}}
 brew {{ . | quote }}
@@ -10,3 +11,40 @@ cask {{ . | quote }}
 {{ end -}}
 EOF
 {{ end -}}
+
+# install emacs after bundle
+# TODO .chezmoidata/packages.yaml no have "tap" in config(?) could set as an environment variable(?)
+# emacs-plus
+# brew tap d12frosted/emacs-plus
+# brew install emacs-plus@30 --with-retro-gnu-meditate-levitate-icon
+#
+# ln -s /usr/local/opt/emacs-plus/Emacs.app /Applications/Emacs.app
+# doom docs say emacs-mac preferred over emacs-plus
+# brew tap railwaycat/emacsmacport
+# brew install emacs-mac@29 # --with-modules flag is now by default, doom docs are outdated https://github.com/doomemacs/doomemacs/blob/master/docs/getting_started.org#on-macos
+# emacs-mac is v29, but emacs-plus is v30
+# ln -s /usr/local/opt/emacs-mac/Emacs.app /Applications/Emacs.app
+
+# emacs-builds... another one! looks like it supports v30 whereas emacs-mac is v29
+# https://github.com/jimeh/emacs-builds
+# seems like it supports ARM apple silicon
+brew tap jimeh/emacs-builds
+brew install --cask jimeh/emacs-builds/emacs-app
+# after install instructions
+#Use Emacs.app as emacs CLI Tool
+#Installed via Homebrew Cask
+#The cask installation method sets up CLI usage automatically by exposing a emacs command. However it will launch Emacs into GUI mode. To instead have emacs in your terminal open a terminal instance of Emacs, add the following alias to your shell setup:
+#alias emacs="emacs -nw"
+
+# doom
+## required dependencies
+#brew install git ripgrep # in bundle above
+# optional dependencies
+# brew install coreutils fd # in bundle above
+# xcode-select --install # TODO write code to detect if it's already installed
+#
+## install
+git clone https://github.com/hlissner/doom-emacs ~/.emacs.d
+~/.emacs.d/bin/doom install
+
+echo "*** End of Chezmoi install-packages script"

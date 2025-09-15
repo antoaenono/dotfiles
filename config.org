@@ -1,0 +1,25 @@
+* Dotfile Literate Configuration
+
+Here lies my digital self...
+
+** Install
+*** Homebrew
+#+begin_src sh :tangle ~/.local/share/chezmoi/scripts/run_once-install-package.sh.tmpl
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+#+end_src
+
+**** Notes
+- creates a bunch of dirs
+- installs xcode command line tools
+- need to hit return to continue
+- output message after installing xcode:
+Run these commands in your terminal to add Homebrew to your PATH:
+    echo >> /Users/antoaenono/.zprofile
+    echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> /Users/antoaenono/.zprofile
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+- Run brew help to get started
+- Further documentation:
+    https://docs.brew.sh
+- type `brew` or `man brew` to learn more
+
+** Configure

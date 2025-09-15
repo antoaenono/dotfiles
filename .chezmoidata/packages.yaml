@@ -1,8 +1,11 @@
 packages:
   darwin:
     brews:
-      - "wget"
+      - "coreutils"
+      - "fd"
+      - "ripgrep"
       - "tealdeer"
+      - "wget"
     casks:
       - "ghostty"
       - "zed"
