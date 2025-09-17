@@ -7,5 +7,6 @@ packages:
       - "tealdeer"
       - "wget"
     casks:
+      - "keycastr"
       - "ghostty"
       - "zed"

@@ -50,7 +50,11 @@
 ;   (define-key evil-normal-state-map (kbd "i") 'evil-previous-line)  ;; Replace k with i
 ;   (define-key evil-normal-state-map (kbd "o") 'evil-forward-char)   ;; Replace l with o
 ; )
-
+;; Didn't end up doing this cuz if I rebind anything I have to rebind everything.
+;; People have made plugins for this...
+;; ...but I don't want to lose vim's original bindings --- they are mnemonic
+;; ...and if I'm on a qwerty board I still 'member 'em.
+;; Instead: I use a "navigation" layer on my keyboard for L,D,U,R (N,E,I,O).
 
 
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
