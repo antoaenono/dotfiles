@@ -1,6 +1,2 @@
-echo "load zprofile"
-
 # Set PATH for Homebrew
 eval "$(/opt/homebrew/bin/brew shellenv)"
-
-echo "loaded zprofile"

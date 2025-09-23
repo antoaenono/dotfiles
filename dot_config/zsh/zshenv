@@ -1,3 +1,0 @@
-echo "load zshenv"
-export ZDOTDIR="$HOME/.config/zsh"
-echo "loaded zshenv"

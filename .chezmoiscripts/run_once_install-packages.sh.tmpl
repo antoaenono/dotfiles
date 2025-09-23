@@ -1,20 +1,18 @@
 #!/bin/bash
+echo "start: chezmoi install script"
 
-# symlink zshenv
-echo "linking zshenv"
-ln -sfv ~/.config/zsh/zshenv ~/.zshenv
-
+# bundle multiple formulas (text/CLI) and casks (graphical) into a single installation command
 {{ if eq .chezmoi.os "darwin" -}}
-# bundle multiple formulas (text) and casks (graphical)
-echo "install: brew bundle"
-brew bundle --file=/dev/stdin <<EOF
-{{ range .packages.darwin.brews -}}
-brew {{ . | quote }}
-{{ end -}}
-{{ range .packages.darwin.casks -}}
-cask {{ . | quote }}
-{{ end -}}
+    echo "install: brew bundle"
+    brew bundle --file=/dev/stdin <<EOF
+    {{ range .packages.darwin.brews }}
+        brew {{ . | quote }}
+    {{ end }}
+    {{ range .packages.darwin.casks }}
+        cask {{ . | quote }}
+    {{ end }}
 EOF
+# no whitespace before EOF
 {{ end -}}
 
 # install emacs after bundle
@@ -33,7 +31,7 @@ EOF
 # emacs-builds https://github.com/jimeh/emacs-builds
 # v30 whereas emacs-mac is v29
 # supports ARM apple silicon instructions
-echo "install emacs"
+echo "install: emacs"
 #brew tap jimeh/emacs-builds
 #brew install --cask jimeh/emacs-builds/emacs-app
 # after install instructions
@@ -41,6 +39,7 @@ echo "install emacs"
 #Installed via Homebrew Cask
 #The cask installation method sets up CLI usage automatically by exposing a emacs command. However it will launch Emacs into GUI mode. To instead have emacs in your terminal open a terminal instance of Emacs, add the following alias to your shell setup:
 #alias emacs="emacs -nw"
+echo "installed: emacs"
 
 # doom
 ## required dependencies
@@ -49,10 +48,12 @@ echo "install: doom deps"
 # optional dependencies
 # brew install coreutils fd # in bundle above
 # xcode-select --install # TODO write code to detect if it's already installed
+echo "installed: doom deps"
 #
 ## install
 echo "install: doom"
 #git clone https://github.com/hlissner/doom-emacs ~/.emacs.d
 #~/.emacs.d/bin/doom install
+echo "installed: doom"
 
 echo "*** End of Chezmoi install-packages script"
