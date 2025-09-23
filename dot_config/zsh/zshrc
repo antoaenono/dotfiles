@@ -1,3 +1,5 @@
+echo "load zshrc"
+
 # Aliases
 source ~/.config/zsh/alias.zsh
 
@@ -13,3 +15,5 @@ export SSH_AUTH_SOCK=/Users/antoaenono/Library/Containers/com.bitwarden.desktop/
 
 # Tealdeer
 export TEALDEER_CONFIG_DIR=/Users/antoaenono/.config/tealdeer
+
+echo "loaded zshrc"

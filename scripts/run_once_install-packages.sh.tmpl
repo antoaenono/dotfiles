@@ -1,7 +1,12 @@
-{{ if eq .chezmoi.os "darwin" -}}
 #!/bin/bash
 
+# symlink zshenv
+echo "linking zshenv"
+ln -sfv ~/.config/zsh/zshenv ~/.zshenv
+
+{{ if eq .chezmoi.os "darwin" -}}
 # bundle multiple formulas (text) and casks (graphical)
+echo "install: brew bundle"
 brew bundle --file=/dev/stdin <<EOF
 {{ range .packages.darwin.brews -}}
 brew {{ . | quote }}
@@ -25,11 +30,12 @@ EOF
 # emacs-mac is v29, but emacs-plus is v30
 # ln -s /usr/local/opt/emacs-mac/Emacs.app /Applications/Emacs.app
 
-# emacs-builds... another one! looks like it supports v30 whereas emacs-mac is v29
-# https://github.com/jimeh/emacs-builds
-# seems like it supports ARM apple silicon
-brew tap jimeh/emacs-builds
-brew install --cask jimeh/emacs-builds/emacs-app
+# emacs-builds https://github.com/jimeh/emacs-builds
+# v30 whereas emacs-mac is v29
+# supports ARM apple silicon instructions
+echo "install emacs"
+#brew tap jimeh/emacs-builds
+#brew install --cask jimeh/emacs-builds/emacs-app
 # after install instructions
 #Use Emacs.app as emacs CLI Tool
 #Installed via Homebrew Cask
@@ -38,13 +44,15 @@ brew install --cask jimeh/emacs-builds/emacs-app
 
 # doom
 ## required dependencies
+echo "install: doom deps"
 #brew install git ripgrep # in bundle above
 # optional dependencies
 # brew install coreutils fd # in bundle above
 # xcode-select --install # TODO write code to detect if it's already installed
 #
 ## install
-git clone https://github.com/hlissner/doom-emacs ~/.emacs.d
-~/.emacs.d/bin/doom install
+echo "install: doom"
+#git clone https://github.com/hlissner/doom-emacs ~/.emacs.d
+#~/.emacs.d/bin/doom install
 
 echo "*** End of Chezmoi install-packages script"

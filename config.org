@@ -17,7 +17,7 @@ You gotta read it in emacs to really see. One of these lifetimes, emacs will fin
 
 The tangle of code within these writings... It feels...
 ...as Donald said: [I'm paraphrasing]
-#+begin_src story
+#+begin_src
     your code should tell a story
 #+end_src
 
@@ -27,48 +27,113 @@ Before install anyting... check ya hands an keys.
 **** hands
 touch type 1.0 accuracy. slow
 backspace === push/pull-up
-**** adv360
+**** keyboards
+***** adv360
 no cap labels. let the keys come to you
 home-row-mods
 colemak-dh
-layers: base, nav, func, mod
-***** layout
+
+Customization of the Kinesis Advantage 360 is in a separate repository:
 https://github.com/antoaenono/key-zmk-adv360pro
+***** built-in keeb
+Handled below due to sequential nature of `tangle`.
 
 *** voice, face, eyes, body
 talon
 
 ** Install
-*** dotfiles
-
-#+begin_src shell :tangle "install.sh"
-git clone github.com/antoaenono/dotfiles.git ~/.local/share/chezmoi
-#+end_src
-
 *** Homebrew
 ...RIP MacPorts..? I'm too late to the game.
 
-Install `homebrew` via blindly trusting script:
-#+begin_src shell
+#+begin_src shell :tangle "install-prerequisites.sh"
+echo "Install `homebrew` via blindly trusting script..."
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 #+end_src
 
-**** Notes
+**** Notes on the install script
 - creates a bunch of dirs
 - installs xcode command line tools
 - need to hit return to continue
 - output message after installing xcode:
-  Run these commands in your terminal to add Homebrew to your PATH:
-      echo >> /Users/antoaenono/.zprofile
-      echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> /Users/antoaenono/.zprofile
-      eval "$(/opt/homebrew/bin/brew shellenv)"
-  - Run brew help to get started
-  - Further documentation:
-      https://docs.brew.sh
-  - type `brew` or `man brew` to learn more
+Run these commands in your terminal to add Homebrew to your PATH:
+echo >> /Users/antoaenono/.zprofile
+echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> /Users/antoaenono/.zprofile
+eval "$(/opt/homebrew/bin/brew shellenv)"
+- Run brew help to get started
+- Further documentation:
+https://docs.brew.sh
+- type `brew` or `man brew` to learn more
+
 *** chezmoi
-#+begin_src shell
+#+begin_src shell :tangle "install-prerequisites.sh"
 brew install chezmoi
 #+end_src
 
+*** dotfiles
+#+begin_src shell :tangle "install-prerequisites.sh"
+git clone github.com/antoaenono/dotfiles.git ~/.local/share/chezmoi
+#+end_src
+
+***
+
+*** bitwarden
+**** SSH agent
+This environment variable needs to be set to defer to Bitwarden's SSH agent on `commit` and `push`.
+#+begin_src shell
+export SSH_AUTH_SOCK=/Users/antoaenono/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock
+#+end_src
+
+*** aerospace
+#+begin_src shell
+brew tap nikitabobko/aerospace
+brew install --cask nikitabobko/tap/aerospace
+#+end_src
+
+*** emacs
+**** mac standalone application
+https://github.com/jimeh/emacs-builds
+#+begin_src
+brew tap jimeh/emacs-builds
+brew install --cask jimeh/emacs-builds/emacs-app
+#+end_src
+
+**** doom
+***** add `doom` command to PATH
+in zshrc:
+#+begin_src shell
+# add `doom` helper command to PATH
+export PATH="$HOME/.emacs.d/bin:$PATH"
+echo "`doom` added to path: eg `doom sync`"
+#+end_src
+
+*** ollama
+**** homebrew
+***** CLI only
+#+begin_src shell
+brew install ollama
+#+end_src
+***** GUI
+#+begin_src shell
+brew install --cask ollama-app
+#+end_src
+**** official installer from website
+  https://ollama.com/download
+  installs both CLI and GUI
+
+
 ** Configure
+*** built-in keeb
+#+begin_src shell
+# colemak-dh was originally called -dhm, now the m is implied.
+# we want the ISO version (z is bottom left)
+echo "homebrew: colemak-dh keyboard variant"
+brew install --cask colemak-dh
+#+end_src
+
+*** git
+**** aliases
+
+*** github
+**** SSH
+***** authentication
+***** signing
