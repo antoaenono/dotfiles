@@ -41,3 +41,13 @@
 # # which is explained in the docs for that config option.
 # # Just for example:
 # resize-overlay-duration = 4s 200ms
+
+font-size=28
+
+theme = Monokai Pro Machine
+
+window-save-state = always
+macos-titlebar-style = transparent
+copy-on-select = clipboard
+
+keybind = cmd+s>r=reload_config

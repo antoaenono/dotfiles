@@ -1,56 +1,71 @@
+#+title: Literate Dotfile Configuration
+
 * Dotfile Literate Configuration
+:PROPERTIES:
+:UNNUMBERED: t
+:COMMENT: setting to t doesnt seem to work
+:END:
 
-This config is (so far) only for an MX Apple silicon machine.
 Here in _the garden_ lies my digital self, amongst the bees and tings and flowers... and the wall...
+This config is (so far) only for Apple Mx machine.
+It's not only Apple computer.
+Some aspects (hardware, keyboards, talon) are independent.
+I includem aspects here too -- 'em part of my config.
 
-Some aspects (hardware, talon) don't depend on Apple computer.
-I includeese aspects here too -- dey considered part o my `config`.
+Welcome to this document. It's written in the style of `literate programming`.
+(shout out Donald Knuth)
 
-Welcome to this document. It's written in the style of `literate programming`. (shout out Donald Knuth)
 This document is an `Org` file. It ends with ".org". It's a mix of writing and code. Just some symbols...
-For settin up me macheens, this file actively works as the "single source of truth".
-Anytime I touch [configure] [change something] it is written --- here.
 
-If ur readin in HTML browser, u only see de /basic/ code block.
-irl (in emacs) the code blocks are *linked* to certain files. (aka `tangled`, ie automatic export)
+This file actively works as the
+"single source of truth"
+for settin up me macheens.
+
+Every time I change something... it is /described/ here.
+The code is then /tangled/.
+
+If ur readin in a HTML web browser, u only see de /basic/ code block. You're missing the magic of `Org`.
+irl (in emacs world) the code blocks are *linked* to certain files. (aka `tangled`, ie automatic export to a file)
 You gotta read it in emacs to really see. One of these lifetimes, emacs will find you.
 
-The tangle of code within these writings... It feels...
+The /tangle/ of code /within/ these writings... It feels...
 ...as Donald said: [I'm paraphrasing]
 #+begin_src
     your code should tell a story
 #+end_src
 
-** Tools
-*** hands & keyboard
+* Tools
+** hands & keyboard
 Before install anyting... check ya hands an keys.
-**** hands
+*** hands
 touch type 1.0 accuracy. slow
 backspace === push/pull-up
-**** keyboards
-***** adv360
+*** keyboards
+**** adv360
 no cap labels. let the keys come to you
 home-row-mods
 colemak-dh
 
-Customization of the Kinesis Advantage 360 is in a separate repository:
+Customization of the Kinesis Advantage 360 is in a separate repo:
 https://github.com/antoaenono/key-zmk-adv360pro
-***** built-in keeb
+**** built-in keeb
 Handled below due to sequential nature of `tangle`.
 
-*** voice, face, eyes, body
+** voice, face, eyes, body
 talon
 
 ** Install
-*** Homebrew
-...RIP MacPorts..? I'm too late to the game.
+*** Setup (before chezmoi)
+**** Homebrew
+MacPorts...? I'm too late.
+First, we need to be able to brew.
 
 #+begin_src shell :tangle "install-prerequisites.sh"
 echo "Install `homebrew` via blindly trusting script..."
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 #+end_src
 
-**** Notes on the install script
+***** Notes on the install script
 - creates a bunch of dirs
 - installs xcode command line tools
 - need to hit return to continue
@@ -64,41 +79,44 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 https://docs.brew.sh
 - type `brew` or `man brew` to learn more
 
-*** chezmoi
+**** chezmoi
 #+begin_src shell :tangle "install-prerequisites.sh"
 brew install chezmoi
 #+end_src
 
-*** dotfiles
+**** dotfiles
+`chezmoi` /is/ my dotfiles
 #+begin_src shell :tangle "install-prerequisites.sh"
 git clone github.com/antoaenono/dotfiles.git ~/.local/share/chezmoi
 #+end_src
 
-***
+*** After chezmoi
 
-*** bitwarden
-**** SSH agent
+The =.chezmoiscripts=[fn:1] directory contains scripts which are not copied to =$HOME=.
+
+**** bitwarden
+***** SSH agent
 This environment variable needs to be set to defer to Bitwarden's SSH agent on `commit` and `push`.
 #+begin_src shell
 export SSH_AUTH_SOCK=/Users/antoaenono/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock
 #+end_src
 
-*** aerospace
+**** aerospace
 #+begin_src shell
 brew tap nikitabobko/aerospace
 brew install --cask nikitabobko/tap/aerospace
 #+end_src
 
-*** emacs
-**** mac standalone application
+**** emacs
+***** mac standalone application
 https://github.com/jimeh/emacs-builds
 #+begin_src
 brew tap jimeh/emacs-builds
 brew install --cask jimeh/emacs-builds/emacs-app
 #+end_src
 
-**** doom
-***** add `doom` command to PATH
+***** doom
+****** add `doom` command to PATH
 in zshrc:
 #+begin_src shell
 # add `doom` helper command to PATH
@@ -106,28 +124,40 @@ export PATH="$HOME/.emacs.d/bin:$PATH"
 echo "`doom` added to path: eg `doom sync`"
 #+end_src
 
-*** ollama
-**** homebrew
-***** CLI only
+**** ollama
+***** homebrew
+****** CLI only
 #+begin_src shell
 brew install ollama
 #+end_src
-***** GUI
+
+****** GUI
 #+begin_src shell
 brew install --cask ollama-app
 #+end_src
-**** official installer from website
+
+***** official installer from website
   https://ollama.com/download
   installs both CLI and GUI
 
+**** zsh
+#+begin_example
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+#+end_example
+
+***** starship
+#+begin_example
+curl -sS https://starship.rs/install.sh | sh
+#+end_example
 
 ** Configure
 *** built-in keeb
 #+begin_src shell
-# colemak-dh was originally called -dhm, now the m is implied.
-# we want the ISO version (z is bottom left)
+# colemak-dh was originally called -dhm. now, m is implied.
+# ISO: z at bottom left
 echo "homebrew: colemak-dh keyboard variant"
 brew install --cask colemak-dh
+echo "log out for new keyboard layout to take affect"
 #+end_src
 
 *** git
@@ -137,3 +167,7 @@ brew install --cask colemak-dh
 **** SSH
 ***** authentication
 ***** signing
+
+* Footnotes
+
+[fn:1] https://www.chezmoi.io/reference/special-directories/chezmoiscripts/]

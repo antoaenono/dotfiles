@@ -1,8 +1,6 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
-;; Place your private configuration here! Remember, you do not need to run 'doom
-;; sync' after modifying this file!
-
+; Remember, you do not need to run 'doom sync' after modifying this file!
 
 ;; Some functionality uses this to identify you, e.g. GPG configuration, email
 ;; clients, file templates and snippets. It is optional.
@@ -29,32 +27,86 @@
 ;; refresh your font settings. If Emacs still can't find your font, it likely
 ;; wasn't installed correctly. Font issues are rarely Doom issues!
 
-;; There are two ways to load a theme. Both assume the theme is installed and
-;; available. You can either set `doom-theme' or manually load a theme with the
-;; `load-theme' function. This is the default:
-(setq doom-theme 'doom-one)
+(setq doom-theme 'doom-monokai-machine)
 
-;; This determines the style of line numbers in effect. If set to `nil', line
-;; numbers are disabled. For relative line numbers, set this to `relative'.
 (setq display-line-numbers-type 'relative)
 
-;; If you use `org' and don't want your org files in the default location below,
-;; change `org-directory'. It must be set before org loads!
+;; 80 char limit encourages concise code. Respect to the early days.
+;; note: in org files 80 chars is /on top/ of the spacing under the heading
+(setq-default fill-column 80)
+(global-display-fill-column-indicator-mode 1)
+ 
+;; Rebind "quit" to Cmd-Shift-q to avoid conflict with M-q (fill-paragraph)
+;; ...shouldn't be so easy to quit anyway!
+(map! :g "M-Q" #'save-buffers-kill-terminal)
+;; TODO the above doesn't work, it just adds a new binding, and Emacs Gui still captures Cmd+q
+
+(global-tab-line-mode 1) ; i see buffers in windows
+(tab-bar-mode 1) ; i see windows in frames
+
+;; HASKELL
+;; Hooks so haskell and literate haskell major modes trigger LSP setup
+(add-hook 'haskell-mode-hook #'lsp)
+(add-hook 'haskell-literate-mode-hook #'lsp)
+
+;; TODO test if these are really needed after moving path to .zshenv (was in .zshrc)
+;; Add haskell lsp to path for emacs subprocesses
+(add-to-list 'exec-path (expand-file-name "~/.ghcup/bin"))
+;; Add haskell tools to path for emacs environment
+(setenv "PATH" (concat (expand-file-name "~/.ghcup/bin") ":" (getenv "PATH")))
+;; hlint in local bin. Ensure ~/.local/bin is in Emacs's exec-path
+;; TODO this didnt work emacs still can't find hlint
+(setq exec-path (cons (expand-file-name "~/.local/bin") exec-path))
+
+;; ORG ;;
 (setq org-directory "~/org/")
 
+;; more `<` tab completion templates aka "structure templates" -- orgmode.org/manual/Structure-Templates.html
+;(after! org (add-to-list 'org-structure-template-alist
+  ;("sh" . "src shell")))
 
-;; Rebind Vim motion keys to n, e, i, o
-; (after! evil
-;   (define-key evil-normal-state-map (kbd "n") 'evil-backward-char)  ;; Replace h with n
-;   (define-key evil-normal-state-map (kbd "e") 'evil-next-line)     ;; Replace j with e
-;   (define-key evil-normal-state-map (kbd "i") 'evil-previous-line)  ;; Replace k with i
-;   (define-key evil-normal-state-map (kbd "o") 'evil-forward-char)   ;; Replace l with o
-; )
-;; Didn't end up doing this cuz if I rebind anything I have to rebind everything.
-;; People have made plugins for this...
-;; ...but I don't want to lose vim's original bindings --- they are mnemonic
-;; ...and if I'm on a qwerty board I still 'member 'em.
-;; Instead: I use a "navigation" layer on my keyboard for L,D,U,R (N,E,I,O).
+;; custom syntax: !! to indicate key presses
+;; add as a keyword in org-mode and draw a box around it
+;; TODO export to <kbd>
+(after! org
+  (font-lock-add-keywords
+   'org-mode
+   '(("!!\\(.*?\\)!!"
+      (1 '(face (:weight 'semi-bold
+                           :box '(:line-width 2 :color "palegoldenrod"))))))))
+
+;; automatically show magic behind point
+(use-package! org-appear
+  :after org
+  :hook (org-mode . org-appear-mode)
+  :config
+  (setq org-appear-autoemphasis t ; _/**/_
+        org-appear-autolinks t ;; dun work on #+TRANSCLUSION directives. use `org-toggle-link-display`
+        org-appear-autoentities t ;; \alpha for α
+  )
+)
+
+; information teleport
+(use-package! org-transclusion
+  :after org
+  :init
+  (map!
+   :map global-map "<f12>" #'org-transclusion-add
+   :leader
+   :prefix "n"
+   :desc "Org Transclusion Mode" "t" #'org-transclusion-mode))
+
+; https://nobiot.github.io/org-transclusion/#:~:text=4.10%20Extensions,regain%20the%20indentation.
+; this didn't seem to work, or i don't understand what it's supposed to be doing
+; but i was trying to fix the issue where the source buffer loses indentation while transclusion is active
+  ; :config
+  ; ;; Enable org-transclusion-indent-mode extension
+  ; (add-to-list 'org-transclusion-extensions 'org-transclusion-indent-mode)
+  ; (require 'org-transclusion-indent-mode))
+
+; roaman emacs... to gather
+(setq org-roam-directory "~/org/roam")
+(org-roam-db-autosync-mode) ; docs say put this here[?]
 
 
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
