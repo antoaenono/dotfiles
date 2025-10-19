@@ -51,7 +51,7 @@ automatically-unhide-macos-hidden-apps = true
     ctrl-alt-shift-semicolon = 'mode service'
 
     # Layout https://nikitabobko.github.io/AeroSpace/commands#layout
-    cmd-alt-period= 'layout accordion horizontal vertical'
+    cmd-alt-period= 'layout accordion vertical horizontal' 
     cmd-alt-slash = 'layout tiles horizontal vertical'
 
     # Focus https://nikitabobko.github.io/AeroSpace/commands#focus

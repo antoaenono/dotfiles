@@ -34,6 +34,9 @@ The /tangle/ of code /within/ these writings... It feels...
     your code should tell a story
 #+end_src
 
+* How to use
+Run the helper !!M-x literate-config-export!! to save, tangle and ~chezmoi apply~.
+
 * Physical
 ** hands & keyboard
 Before install anyting... check ya hands an keys.
@@ -122,8 +125,54 @@ export SSH_AUTH_SOCK=/Users/antoaenono/Library/Containers/com.bitwarden.desktop/
 brew tap nikitabobko/aerospace
 brew install --cask nikitabobko/tap/aerospace
 #+end_src
+**** emacs
+***** mac standalone application
+https://github.com/jimeh/emacs-builds
+#+begin_src
+brew tap jimeh/emacs-builds
+brew install --cask jimeh/emacs-builds/emacs-app
+#+end_src
 
-***** Commands
+***** doom
+****** add `doom` command to PATH
+in zshrc:
+#+begin_src shell
+# add `doom` helper command to PATH
+export PATH="$HOME/.emacs.d/bin:$PATH"
+echo "`doom` added to path: eg `doom sync`"
+#+end_src
+**** ollama
+***** homebrew
+****** CLI only
+#+begin_src shell
+brew install ollama
+#+end_src
+
+****** GUI
+#+begin_src shell
+brew install --cask ollama-app
+#+end_src
+
+***** official installer from website
+  https://ollama.com/download
+  installs both CLI and GUI
+
+**** zsh
+#+begin_example
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+#+end_example
+
+***** help
+~alias~ to show all aliases
+
+***** starship
+#+begin_example
+curl -sS https://starship.rs/install.sh | sh
+#+end_example
+
+** Configure
+*** AeroSpace
+**** Commands
 All commands: https://nikitabobko.github.io/AeroSpace/commands
 
 Run commands from:
@@ -143,7 +192,7 @@ end tell'
 '''
 #+end_example
 
-***** Startup
+**** Startup
 #+begin_src toml :tangle "./dot_config/aerospace/aerospace.toml"
 start-at-login = true
 
@@ -153,7 +202,7 @@ after-startup-command = [
 ]
 #+end_src
 
-***** Properties
+**** Properties
 #+begin_src toml :tangle "./dot_config/aerospace/aerospace.toml"
 # Focus: mouse follow
 #on-focused-monitor-changed = ['move-mouse monitor-lazy-center'] # follow monitor
@@ -207,8 +256,8 @@ Gaps
     outer.right =      1
 #+end_src
 
-***** Key Bindings
-****** Key Syntax
+**** Key Bindings
+***** Key Syntax
 - Letters.        a, b, c, ..., z
 - Numbers.        0, 1, 2, ..., 9
 - Keypad numbers. keypad0, keypad1, keypad2, ..., keypad9
@@ -222,7 +271,7 @@ Gaps
 - Arrows.         left, down, up, right
 - Modifiers.      cmd, alt, ctrl, shift
 
-****** Main Mode
+***** Main Mode
 #+begin_src toml :tangle "./dot_config/aerospace/aerospace.toml"
 [mode.main.binding]
     # Modes  https://nikitabobko.github.io/AeroSpace/commands#mode
@@ -231,7 +280,7 @@ Gaps
     ctrl-alt-shift-semicolon = 'mode service'
 
     # Layout https://nikitabobko.github.io/AeroSpace/commands#layout
-    cmd-alt-period= 'layout accordion horizontal vertical'
+    cmd-alt-period= 'layout accordion vertical horizontal' 
     cmd-alt-slash = 'layout tiles horizontal vertical'
 
     # Focus https://nikitabobko.github.io/AeroSpace/commands#focus
@@ -331,7 +380,7 @@ Gaps
     ctrl-alt-tab = 'workspace-back-and-forth'
 #+end_src
 
-****** Service Mode
+***** Service Mode
 #+begin_src toml :tangle "./dot_config/aerospace/aerospace.toml"
 [mode.service.binding]
     esc = ['reload-config', 'mode main']
@@ -396,52 +445,6 @@ Gaps
   run = ['move-node-to-workspace Z']
 #+end_src
 
-**** emacs
-***** mac standalone application
-https://github.com/jimeh/emacs-builds
-#+begin_src
-brew tap jimeh/emacs-builds
-brew install --cask jimeh/emacs-builds/emacs-app
-#+end_src
-
-***** doom
-****** add `doom` command to PATH
-in zshrc:
-#+begin_src shell
-# add `doom` helper command to PATH
-export PATH="$HOME/.emacs.d/bin:$PATH"
-echo "`doom` added to path: eg `doom sync`"
-#+end_src
-**** ollama
-***** homebrew
-****** CLI only
-#+begin_src shell
-brew install ollama
-#+end_src
-
-****** GUI
-#+begin_src shell
-brew install --cask ollama-app
-#+end_src
-
-***** official installer from website
-  https://ollama.com/download
-  installs both CLI and GUI
-
-**** zsh
-#+begin_example
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-#+end_example
-
-***** help
-~alias~ to show all aliases
-
-***** starship
-#+begin_example
-curl -sS https://starship.rs/install.sh | sh
-#+end_example
-
-** Configure
 *** built-in keeb
 #+begin_src shell
 # colemak-dh was originally called -dhm. now, m is implied.
