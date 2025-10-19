@@ -1,0 +1,189 @@
+start-at-login = true
+
+# https://github.com/FelixKratz/JankyBorders 
+after-startup-command = [
+  'exec-and-forget borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=5.0'
+]
+
+# Focus: mouse follow
+#on-focused-monitor-changed = ['move-mouse monitor-lazy-center'] # follow monitor
+on-focus-changed = ['move-mouse window-lazy-center'] # follow window
+# https://nikitabobko.github.io/AeroSpace/commands#move-mouse
+# https://nikitabobko.github.io/AeroSpace/guide#on-focus-changed-callbacks
+
+# Window: layouts
+# https://nikitabobko.github.io/AeroSpace/guide#layouts
+default-root-container-layout = 'tiles' # tiles|accordion
+default-root-container-orientation = 'auto' # horizontal|vertical|auto
+# auto: wide monitor => horizontal, tall monitor => vertical
+accordion-padding = 30
+
+# Window: tree structure for containers: normalization property
+# https://nikitabobko.github.io/AeroSpace/guide#normalization
+enable-normalization-flatten-containers = true
+enable-normalization-opposite-orientation-for-nested-containers = true
+
+# Misc:
+# Toggle off macOS "Hide application", useful if accidentally hit cmd-h
+# https://nikitabobko.github.io/AeroSpace/goodies#disable-hide-app
+automatically-unhide-macos-hidden-apps = true
+
+[mode.main.binding]
+    # Modes  https://nikitabobko.github.io/AeroSpace/commands#mode
+    # You can make up any kind of mode you want!
+    # https://nikitabobko.github.io/AeroSpace/guide#binding-modes
+    ctrl-alt-shift-semicolon = 'mode service'
+
+    # Layout https://nikitabobko.github.io/AeroSpace/commands#layout
+    ctrl-alt-slash = 'layout tiles horizontal vertical'
+    ctrl-alt-comma = 'layout accordion horizontal vertical'
+
+    # Focus https://nikitabobko.github.io/AeroSpace/commands#focus
+    cmd-alt-h = 'focus left'
+    cmd-alt-left = 'focus left'
+    cmd-alt-j = 'focus down'
+    cmd-alt-down = 'focus down'
+    cmd-alt-k = 'focus up'
+    cmd-alt-up= 'focus up'
+    cmd-alt-l = 'focus right'
+    cmd-alt-right = 'focus right'
+
+    # Move https://nikitabobko.github.io/AeroSpace/commands#move
+    ctrl-alt-shift-h = 'move left'
+    ctrl-alt-shift-left = 'move left'
+    ctrl-alt-shift-j = 'move down'
+    ctrl-alt-shift-down = 'move down'
+    ctrl-alt-shift-k = 'move up'
+    ctrl-alt-shift-up = 'move up'
+    ctrl-alt-shift-l = 'move right'
+    ctrl-alt-shift-right = 'move right'
+
+    # Resize https://nikitabobko.github.io/AeroSpace/commands#resize
+    cmd-alt-minus = 'resize smart -50'
+    cmd-alt-equal = 'resize smart +50'
+
+    # Workspace show https://nikitabobko.github.io/AeroSpace/commands#workspace
+    cmd-alt-1 = 'workspace 1'
+    cmd-alt-2 = 'workspace 2'
+    cmd-alt-3 = 'workspace 3'
+    cmd-alt-4 = 'workspace 4'
+    cmd-alt-5 = 'workspace 5'
+    cmd-alt-6 = 'workspace 6'
+    cmd-alt-7 = 'workspace 7'
+    cmd-alt-8 = 'workspace 8'
+    cmd-alt-9 = 'workspace 9'
+    cmd-alt-a = 'workspace A'
+    cmd-alt-b = 'workspace B'
+    cmd-alt-c = 'workspace C'
+    cmd-alt-d = 'workspace D'
+    cmd-alt-e = 'workspace E'
+    cmd-alt-f = 'workspace F'
+    cmd-alt-g = 'workspace G'
+    cmd-alt-i = 'workspace I'
+    cmd-alt-m = 'workspace M'
+    cmd-alt-n = 'workspace N'
+    cmd-alt-o = 'workspace O'
+    cmd-alt-p = 'workspace P'
+    cmd-alt-q = 'workspace Q'
+    cmd-alt-r = 'workspace R'
+    cmd-alt-s = 'workspace S'
+    cmd-alt-t = 'workspace T'
+    cmd-alt-u = 'workspace U'
+    cmd-alt-v = 'workspace V'
+    cmd-alt-w = 'workspace W'
+    cmd-alt-x = 'workspace X'
+    cmd-alt-y = 'workspace Y'
+    cmd-alt-z = 'workspace Z'
+
+    # Workspace move https://nikitabobko.github.io/AeroSpace/commands#move-node-to-workspace
+    ctrl-alt-cmd-1 = 'move-node-to-workspace 1'
+    ctrl-alt-cmd-2 = 'move-node-to-workspace 2'
+    ctrl-alt-cmd-3 = 'move-node-to-workspace 3'
+    ctrl-alt-cmd-4 = 'move-node-to-workspace 4'
+    ctrl-alt-cmd-5 = 'move-node-to-workspace 5'
+    ctrl-alt-cmd-6 = 'move-node-to-workspace 6'
+    ctrl-alt-cmd-7 = 'move-node-to-workspace 7'
+    ctrl-alt-cmd-8 = 'move-node-to-workspace 8'
+    ctrl-alt-cmd-9 = 'move-node-to-workspace 9'
+    ctrl-alt-cmd-a = 'move-node-to-workspace A'
+    ctrl-alt-cmd-b = 'move-node-to-workspace B'
+    ctrl-alt-cmd-c = 'move-node-to-workspace C'
+    ctrl-alt-cmd-d = 'move-node-to-workspace D'
+    ctrl-alt-cmd-e = 'move-node-to-workspace E'
+    ctrl-alt-cmd-f = 'move-node-to-workspace F'
+    ctrl-alt-cmd-g = 'move-node-to-workspace G'
+    ctrl-alt-cmd-i = 'move-node-to-workspace I'
+    ctrl-alt-cmd-m = 'move-node-to-workspace M'
+    ctrl-alt-cmd-n = 'move-node-to-workspace N'
+    ctrl-alt-cmd-o = 'move-node-to-workspace O'
+    ctrl-alt-cmd-p = 'move-node-to-workspace P'
+    ctrl-alt-cmd-q = 'move-node-to-workspace Q'
+    ctrl-alt-cmd-r = 'move-node-to-workspace R'
+    ctrl-alt-cmd-s = 'move-node-to-workspace S'
+    ctrl-alt-cmd-t = 'move-node-to-workspace T'
+    ctrl-alt-cmd-u = 'move-node-to-workspace U'
+    ctrl-alt-cmd-v = 'move-node-to-workspace V'
+    ctrl-alt-cmd-w = 'move-node-to-workspace W'
+    ctrl-alt-cmd-x = 'move-node-to-workspace X'
+    ctrl-alt-cmd-y = 'move-node-to-workspace Y'
+    ctrl-alt-cmd-z = 'move-node-to-workspace Z'
+
+    # Workspace monitor https://nikitabobko.github.io/AeroSpace/commands#move-workspace-to-monitor
+    ctrl-alt-shift-tab = 'move-workspace-to-monitor --wrap-around next'
+     
+    # Workspace recent https://nikitabobko.github.io/AeroSpace/commands#workspace-back-and-forth
+    ctrl-alt-tab = 'workspace-back-and-forth'
+
+[mode.service.binding]
+    esc = ['reload-config', 'mode main']
+
+    # Window float toggle
+    f = ['layout floating tiling', 'mode main']
+
+    # r = ['flatten-workspace-tree', 'mode main'] # reset layout
+    # backspace = ['close-all-windows-but-current', 'mode main']
+
+    # sticky is not yet supported https://github.com/nikitabobko/AeroSpace/issues/2
+    # s = ['layout sticky tiling', 'mode main']
+
+    # alt-shift-h = ['join-with left', 'mode main']
+    # alt-shift-j = ['join-with down', 'mode main']
+    # alt-shift-k = ['join-with up', 'mode main']
+    # alt-shift-l = ['join-with right', 'mode main']
+
+    # down = 'volume down'
+    # up = 'volume up'
+    # shift-down = ['volume set 0', 'mode main']
+
+# To find an `app-id`, use `aerospace list-apps`
+# https://nikitabobko.github.io/AeroSpace/commands#list-apps
+ 
+# Automatically run functions for specific windows
+# https://nikitabobko.github.io/AeroSpace/guide#on-window-detected-callback
+[[on-window-detected]]
+  if.app-id = 'com.apple.ActivityMonitor'
+  run = ['move-node-to-workspace A']
+
+[[on-window-detected]]
+  if.app-id = 'org.gnu.Emacs'
+  run = ['move-node-to-workspace E']
+
+[[on-window-detected]]
+  if.app-id = 'com.google.Chrome'
+  run = ['move-node-to-workspace C']
+
+[[on-window-detected]]
+  if.app-id = 'com.apple.finder'
+  run = ['move-node-to-workspace F']
+
+[[on-window-detected]]
+  if.app-id = 'com.apple.Safari'
+  run = ['move-node-to-workspace S']
+
+[[on-window-detected]]
+  if.app-id = 'com.mitchellh.ghostty'
+  run = ['move-node-to-workspace T']
+
+[[on-window-detected]]
+  if.app-id = 'dev.zed.Zed'
+  run = ['move-node-to-workspace Z']

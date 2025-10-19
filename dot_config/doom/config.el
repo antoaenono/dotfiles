@@ -31,6 +31,8 @@
 
 (setq display-line-numbers-type 'relative)
 
+(setq mouse-drag-copy-region t)
+
 ;; 80 char limit encourages concise code. Respect to the early days.
 ;; note: in org files 80 chars is /on top/ of the spacing under the heading
 (setq-default fill-column 80)
