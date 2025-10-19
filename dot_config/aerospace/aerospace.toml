@@ -2,7 +2,7 @@ start-at-login = true
 
 # https://github.com/FelixKratz/JankyBorders 
 after-startup-command = [
-  'exec-and-forget borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=5.0'
+  'exec-and-forget borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=7.0'
 ]
 
 # Focus: mouse follow
@@ -28,6 +28,22 @@ enable-normalization-opposite-orientation-for-nested-containers = true
 # https://nikitabobko.github.io/AeroSpace/goodies#disable-hide-app
 automatically-unhide-macos-hidden-apps = true
 
+# Gaps between windows (inner-*) and between monitor edges (outer-*).
+# Possible values:
+# - Constant:     gaps.outer.top = 8
+# - Per monitor:  gaps.outer.top = [{ monitor.main = 16 }, { monitor."some-pattern" = 32 }, 24]
+#                 In this example, 24 is a default value when there is no match.
+#                 Monitor pattern is the same as for 'workspace-to-monitor-force-assignment'.
+#                 See:
+#                 https://nikitabobko.github.io/AeroSpace/guide#assign-workspaces-to-monitors
+[gaps]
+    # inner.horizontal = 0
+    # inner.vertical =   0
+    outer.left =       1
+    outer.bottom =     1
+    outer.top =        1
+    outer.right =      1
+
 [mode.main.binding]
     # Modes  https://nikitabobko.github.io/AeroSpace/commands#mode
     # You can make up any kind of mode you want!
@@ -35,8 +51,8 @@ automatically-unhide-macos-hidden-apps = true
     ctrl-alt-shift-semicolon = 'mode service'
 
     # Layout https://nikitabobko.github.io/AeroSpace/commands#layout
-    ctrl-alt-slash = 'layout tiles horizontal vertical'
-    ctrl-alt-comma = 'layout accordion horizontal vertical'
+    cmd-alt-slash = 'layout tiles horizontal vertical'
+    cmd-alt-comma = 'layout accordion horizontal vertical'
 
     # Focus https://nikitabobko.github.io/AeroSpace/commands#focus
     cmd-alt-h = 'focus left'
@@ -187,3 +203,7 @@ automatically-unhide-macos-hidden-apps = true
 [[on-window-detected]]
   if.app-id = 'dev.zed.Zed'
   run = ['move-node-to-workspace Z']
+
+[[on-window-detected]]
+  if.workspace = 'C'
+  run = ['layout accordion']

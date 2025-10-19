@@ -99,14 +99,17 @@ brew install chezmoi
 git clone github.com/antoaenono/dotfiles.git ~/.local/share/chezmoi
 #+end_src
 
-*** chezmoi does rest
+
+*** chezmoi install rest
 
 The =.chezmoiscripts=[fn:1] directory contains scripts which are not copied to =$HOME=.
+
 **** JankyBorders
 #+begin_src shell
 brew tap FelixKratz/formulae
 brew install borders
 #+end_src
+
 **** bitwarden
 ***** SSH agent
 This environment variable needs to be set to defer to Bitwarden's SSH agent on `commit` and `push`.
@@ -114,7 +117,7 @@ This environment variable needs to be set to defer to Bitwarden's SSH agent on `
 export SSH_AUTH_SOCK=/Users/antoaenono/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock
 #+end_src
 
-**** aerospace
+**** AeroSpace
 #+begin_src shell
 brew tap nikitabobko/aerospace
 brew install --cask nikitabobko/tap/aerospace
@@ -146,7 +149,7 @@ start-at-login = true
 
 # https://github.com/FelixKratz/JankyBorders 
 after-startup-command = [
-  'exec-and-forget borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=5.0'
+  'exec-and-forget borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=7.0'
 ]
 #+end_src
 
@@ -186,7 +189,7 @@ Key-mapping
 #+end_src
 
 Gaps
-#+begin_src toml
+#+begin_src toml :tangle "./dot_config/aerospace/aerospace.toml"
 # Gaps between windows (inner-*) and between monitor edges (outer-*).
 # Possible values:
 # - Constant:     gaps.outer.top = 8
@@ -195,13 +198,13 @@ Gaps
 #                 Monitor pattern is the same as for 'workspace-to-monitor-force-assignment'.
 #                 See:
 #                 https://nikitabobko.github.io/AeroSpace/guide#assign-workspaces-to-monitors
-# [gaps]
-#     inner.horizontal = 0
-#     inner.vertical =   0
-#     outer.left =       0
-#     outer.bottom =     0
-#     outer.top =        0
-#     outer.right =      0
+[gaps]
+    # inner.horizontal = 0
+    # inner.vertical =   0
+    outer.left =       1
+    outer.bottom =     1
+    outer.top =        1
+    outer.right =      1
 #+end_src
 
 ***** Key Bindings
@@ -228,8 +231,8 @@ Gaps
     ctrl-alt-shift-semicolon = 'mode service'
 
     # Layout https://nikitabobko.github.io/AeroSpace/commands#layout
-    ctrl-alt-slash = 'layout tiles horizontal vertical'
-    ctrl-alt-comma = 'layout accordion horizontal vertical'
+    cmd-alt-slash = 'layout tiles horizontal vertical'
+    cmd-alt-comma = 'layout accordion horizontal vertical'
 
     # Focus https://nikitabobko.github.io/AeroSpace/commands#focus
     cmd-alt-h = 'focus left'
@@ -359,6 +362,11 @@ Gaps
  
 # Automatically run functions for specific windows
 # https://nikitabobko.github.io/AeroSpace/guide#on-window-detected-callback
+
+# Only `move-node-to-workspace`, `layout tiling`, `layout floating` are supported
+# https://github.com/nikitabobko/AeroSpace/issues/20
+# this limitation is supposed to be removed in 0.2
+# https://github.com/nikitabobko/AeroSpace/milestone/5
 [[on-window-detected]]
   if.app-id = 'com.apple.ActivityMonitor'
   run = ['move-node-to-workspace A']
@@ -404,7 +412,6 @@ in zshrc:
 export PATH="$HOME/.emacs.d/bin:$PATH"
 echo "`doom` added to path: eg `doom sync`"
 #+end_src
-
 **** ollama
 ***** homebrew
 ****** CLI only
