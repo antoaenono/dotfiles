@@ -51,8 +51,8 @@ automatically-unhide-macos-hidden-apps = true
     ctrl-alt-shift-semicolon = 'mode service'
 
     # Layout https://nikitabobko.github.io/AeroSpace/commands#layout
+    cmd-alt-period= 'layout accordion horizontal vertical'
     cmd-alt-slash = 'layout tiles horizontal vertical'
-    cmd-alt-comma = 'layout accordion horizontal vertical'
 
     # Focus https://nikitabobko.github.io/AeroSpace/commands#focus
     cmd-alt-h = 'focus left'
@@ -176,6 +176,11 @@ automatically-unhide-macos-hidden-apps = true
  
 # Automatically run functions for specific windows
 # https://nikitabobko.github.io/AeroSpace/guide#on-window-detected-callback
+
+# Only `move-node-to-workspace`, `layout tiling`, `layout floating` are supported
+# https://github.com/nikitabobko/AeroSpace/issues/20
+# this limitation is supposed to be removed in 0.2
+# https://github.com/nikitabobko/AeroSpace/milestone/5
 [[on-window-detected]]
   if.app-id = 'com.apple.ActivityMonitor'
   run = ['move-node-to-workspace A']
@@ -203,7 +208,3 @@ automatically-unhide-macos-hidden-apps = true
 [[on-window-detected]]
   if.app-id = 'dev.zed.Zed'
   run = ['move-node-to-workspace Z']
-
-[[on-window-detected]]
-  if.workspace = 'C'
-  run = ['layout accordion']

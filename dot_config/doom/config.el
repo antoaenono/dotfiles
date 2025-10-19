@@ -27,6 +27,26 @@
 ;; refresh your font settings. If Emacs still can't find your font, it likely
 ;; wasn't installed correctly. Font issues are rarely Doom issues!
 
+;; Helper to save, tangle, and run chezmoi
+(defun literate-config-export ()
+  "Tangle the current Org buffer, show the chezmoi diff, and ask to apply."
+  (interactive)
+  (save-buffer)
+  (message "Tangling Org file...")
+  (org-babel-tangle)
+  (message "Tangling complete. Running 'chezmoi apply -vn'...")
+  (let ((diff (shell-command-to-string "chezmoi apply -vn")))
+    (if (string-empty-p diff)
+        (message "No changes to apply.")
+      (with-output-to-temp-buffer "*chezmoi diff*"
+        (princ diff))
+      (if (y-or-n-p "Apply these changes? ")
+          (progn
+            (message "Applying changes...")
+            (shell-command "chezmoi apply -v")
+            (message "Changes applied."))
+        (message "Changes aborted.")))))
+
 (setq doom-theme 'doom-monokai-machine)
 
 (setq display-line-numbers-type 'relative)
