@@ -16,7 +16,7 @@ on-focus-changed = ['move-mouse window-lazy-center'] # follow window
 default-root-container-layout = 'tiles' # tiles|accordion
 default-root-container-orientation = 'auto' # horizontal|vertical|auto
 # auto: wide monitor => horizontal, tall monitor => vertical
-accordion-padding = 30
+accordion-padding = 42
 
 # Window: tree structure for containers: normalization property
 # https://nikitabobko.github.io/AeroSpace/guide#normalization
@@ -37,12 +37,13 @@ automatically-unhide-macos-hidden-apps = true
 #                 See:
 #                 https://nikitabobko.github.io/AeroSpace/guide#assign-workspaces-to-monitors
 [gaps]
-    # inner.horizontal = 0
-    # inner.vertical =   0
-    outer.left =       1
-    outer.bottom =     1
-    outer.top =        1
-    outer.right =      1
+    inner.horizontal = 2
+    inner.vertical =   0
+    
+    outer.left =       0
+    outer.bottom =     2
+    outer.top =        2
+    outer.right =      0
 
 [mode.main.binding]
     # Modes  https://nikitabobko.github.io/AeroSpace/commands#mode

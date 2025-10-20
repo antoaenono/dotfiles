@@ -58,7 +58,7 @@ Handled below due to sequential nature of `tangle`.
 talon
 
 * Digital
-** Install
+** Moi
 *** First, get chezmoi!
 Here are a few steps:
 1. get ~chezmoi~ installed and
@@ -102,70 +102,69 @@ brew install chezmoi
 git clone github.com/antoaenono/dotfiles.git ~/.local/share/chezmoi
 #+end_src
 
-
-*** chezmoi install rest
-
+** Install rest
 The =.chezmoiscripts=[fn:1] directory contains scripts which are not copied to =$HOME=.
+One of these 
 
-**** JankyBorders
+*** JankyBorders
 #+begin_src shell
 brew tap FelixKratz/formulae
 brew install borders
 #+end_src
 
-**** bitwarden
-***** SSH agent
+*** bitwarden
+**** SSH agent
 This environment variable needs to be set to defer to Bitwarden's SSH agent on `commit` and `push`.
 #+begin_src shell
 export SSH_AUTH_SOCK=/Users/antoaenono/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock
 #+end_src
 
-**** AeroSpace
+*** AeroSpace
 #+begin_src shell
 brew tap nikitabobko/aerospace
 brew install --cask nikitabobko/tap/aerospace
 #+end_src
-**** emacs
-***** mac standalone application
+*** emacs
+**** mac standalone application
 https://github.com/jimeh/emacs-builds
 #+begin_src
 brew tap jimeh/emacs-builds
 brew install --cask jimeh/emacs-builds/emacs-app
 #+end_src
 
-***** doom
-****** add `doom` command to PATH
+**** doom
+***** add `doom` command to PATH
 in zshrc:
 #+begin_src shell
 # add `doom` helper command to PATH
 export PATH="$HOME/.emacs.d/bin:$PATH"
 echo "`doom` added to path: eg `doom sync`"
 #+end_src
-**** ollama
-***** homebrew
-****** CLI only
+*** ollama
+**** homebrew
+***** CLI only
 #+begin_src shell
 brew install ollama
 #+end_src
 
-****** GUI
+***** GUI
 #+begin_src shell
 brew install --cask ollama-app
 #+end_src
 
-***** official installer from website
+**** official installer from website
   https://ollama.com/download
   installs both CLI and GUI
 
-**** zsh
+*** zsh
 #+begin_example
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 #+end_example
 
-***** help
+**** help
 ~alias~ to show all aliases
 
-***** starship
+**** starship
 #+begin_example
 curl -sS https://starship.rs/install.sh | sh
 #+end_example
@@ -215,7 +214,7 @@ on-focus-changed = ['move-mouse window-lazy-center'] # follow window
 default-root-container-layout = 'tiles' # tiles|accordion
 default-root-container-orientation = 'auto' # horizontal|vertical|auto
 # auto: wide monitor => horizontal, tall monitor => vertical
-accordion-padding = 30
+accordion-padding = 42
 
 # Window: tree structure for containers: normalization property
 # https://nikitabobko.github.io/AeroSpace/guide#normalization
@@ -230,8 +229,8 @@ automatically-unhide-macos-hidden-apps = true
 
 Key-mapping
 - don't think I need this any more...
-- not sure what it's for since we override main mode
-#+begin_src toml
+- not sure what it's for since we override bindings anyway
+#+begin_src toml 
 # https://nikitabobko.github.io/AeroSpace/guide#key-mapping
 # [key-mapping]
 #     preset = 'qwerty' # qwerty|dvorak|colemak
@@ -248,16 +247,17 @@ Gaps
 #                 See:
 #                 https://nikitabobko.github.io/AeroSpace/guide#assign-workspaces-to-monitors
 [gaps]
-    # inner.horizontal = 0
-    # inner.vertical =   0
-    outer.left =       1
-    outer.bottom =     1
-    outer.top =        1
-    outer.right =      1
+    inner.horizontal = 2
+    inner.vertical =   0
+    
+    outer.left =       0
+    outer.bottom =     2
+    outer.top =        2
+    outer.right =      0
 #+end_src
 
 **** Key Bindings
-***** Key Syntax
+***** Key Names
 - Letters.        a, b, c, ..., z
 - Numbers.        0, 1, 2, ..., 9
 - Keypad numbers. keypad0, keypad1, keypad2, ..., keypad9
@@ -462,6 +462,83 @@ oh-my-zsh git plugin comes with many aliases
 **** SSH
 ***** authentication
 ***** signing
+
+*** GPG
+#+begin_example
+brew install gnupg
+gpg --full-generate-key
+gpg (GnuPG) 2.4.8; Copyright (C) 2025 g10 Code GmbH
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+Please select what kind of key you want:
+   (1) RSA and RSA
+   (2) DSA and Elgamal
+   (3) DSA (sign only)
+   (4) RSA (sign only)
+   (9) ECC (sign and encrypt) *default*
+  (10) ECC (sign only)
+  (14) Existing key from card
+Your selection? 1
+RSA keys may be between 1024 and 4096 bits long.
+What keysize do you want? (3072) 4096
+Requested keysize is 4096 bits
+Please specify how long the key should be valid.
+         0 = key does not expire
+      <n>  = key expires in n days
+      <n>w = key expires in n weeks
+      <n>m = key expires in n months
+      <n>y = key expires in n years
+Key is valid for? (0) 0
+Key does not expire at all
+Is this correct? (y/N) y
+
+GnuPG needs to construct a user ID to identify your key.
+
+Real name: Anton Bilbaeno
+Email address: antoaenono@pm.me
+Comment:
+You selected this USER-ID:
+    "Anton Bilbaeno <antoaenono@pm.me>"
+
+Change (N)ame, (C)omment, (E)mail or (O)kay/(Q)uit? O
+We need to generate a lot of random bytes. It is a good idea to perform
+some other action (type on the keyboard, move the mouse, utilize the
+disks) during the prime generation; this gives the random number
+generator a better chance to gain enough entropy.
+We need to generate a lot of random bytes. It is a good idea to perform
+some other action (type on the keyboard, move the mouse, utilize the
+disks) during the prime generation; this gives the random number
+generator a better chance to gain enough entropy.
+gpg: /Users/antoaenono/.gnupg/trustdb.gpg: trustdb created
+gpg: directory '/Users/antoaenono/.gnupg/openpgp-revocs.d' created
+gpg: revocation certificate stored as '/Users/antoaenono/.gnupg/openpgp-revocs.d/393AA22C309FA6DDD5276BB4110E1145B3074D2D.rev'
+public and secret key created and signed.
+
+pub   rsa4096 2025-10-19 [SC]
+      393AA22C309FA6DDD5276BB4110E1145B3074D2D
+uid                      Anton Bilbaeno <antoaenono@pm.me>
+sub   rsa4096 2025-10-19 [E]
+#+end_example
+
+Then !!C-x C-f!! =./authinfo.gpg=, write.
+Trying to access again from Emacs fails, bcuz ~gpg~ subprocess isn't connected.
+
+#+begin_example
+brew install pinentry-mac
+#+end_example
+
+Add to =~/.gnupg/gpg-agent.conf= 
+#+begin_example
+pinentry-program /opt/homebrew/bin/pinentry-mac
+#+end_example
+
+Make sure agent picks up config
+#+begin_example
+gpg-connect-agent reloadagent /bye
+#+end_example
+
+Now when accessing =./authinfo.gpg=, dialog should appear for passphrase.
 
 * Footnotes
 

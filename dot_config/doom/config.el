@@ -26,8 +26,9 @@
 ;; up, `M-x eval-region' to execute elisp code, and 'M-x doom/reload-font' to
 ;; refresh your font settings. If Emacs still can't find your font, it likely
 ;; wasn't installed correctly. Font issues are rarely Doom issues!
+(setq user-full-name "Your Name"
+      user-mail-address "your.email@example.com")
 
-;; Helper to save, tangle, and run chezmoi
 (defun literate-config-export ()
   "Tangle the current Org buffer, show the chezmoi diff, and ask to apply."
   (interactive)
@@ -129,6 +130,25 @@
 ; roaman emacs... to gather
 (setq org-roam-directory "~/org/roam")
 (org-roam-db-autosync-mode) ; docs say put this here[?]
+
+;; lorem epsom
+;; default is gemini, key in authinfo.gpg
+(use-package! gptel
+  :config
+  (setq! gptel-api-key)
+  ;; org mode for interacting with LLMs?!
+  (setq gptel-default-mode 'org-mode)
+  (setq gptel-log-level 'debug)
+  ;; Register the Ollama backend so it's available from the menu
+  (gptel-make-ollama "Ollama"
+    :host "localhost:11434"
+    :stream t
+    :models '("gpt-oss" "qwen3"))
+  ;; Register Gemini and set it as the default backend.
+  ;; TODO gptel should automatically fetch the key from your .authinfo.gpg file, but i kept getting nil
+  (setq gptel-backend (gptel-make-gemini "Gemini" :stream t :key (gptel-api-key-from-auth-source "generativelanguage.googleapis.com")))
+  ;; (Optional) Set a default model for the Gemini backend
+  (setq gptel-model 'gemini-pro-latest))
 
 
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
