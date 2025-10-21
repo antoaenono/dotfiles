@@ -26,10 +26,15 @@
 ;; up, `M-x eval-region' to execute elisp code, and 'M-x doom/reload-font' to
 ;; refresh your font settings. If Emacs still can't find your font, it likely
 ;; wasn't installed correctly. Font issues are rarely Doom issues!
-(setq user-full-name "Your Name"
-      user-mail-address "your.email@example.com")
 
-(defun literate-config-export ()
+(setq user-full-name "Anton Bilbaeno"
+      user-mail-address "antoaenono@pm.me"
+      doom-theme 'doom-monokai-machine
+      display-line-numbers-type 'relative
+      mouse-drag-copy-region t
+      projectile-project-search-path '("~/source/" "~/org/" "~/.local/share/chezmoi/"))
+
+(defun tangle-moi ()
   "Tangle the current Org buffer, show the chezmoi diff, and ask to apply."
   (interactive)
   (save-buffer)
@@ -48,11 +53,6 @@
             (message "Changes applied."))
         (message "Changes aborted.")))))
 
-(setq doom-theme 'doom-monokai-machine)
-
-(setq display-line-numbers-type 'relative)
-
-(setq mouse-drag-copy-region t)
 
 ;; 80 char limit encourages concise code. Respect to the early days.
 ;; note: in org files 80 chars is /on top/ of the spacing under the heading
@@ -135,10 +135,20 @@
 ;; default is gemini, key in authinfo.gpg
 (use-package! gptel
   :config
-  (setq! gptel-api-key)
+  (setq
+   gptel-log-level 'debug ;; see *gptel-log* buffer
+   gptel-include-reasoning t
+   gptel-include-tool-results t
+   gptel-track-response t
+  )
   ;; org mode for interacting with LLMs?!
-  (setq gptel-default-mode 'org-mode)
-  (setq gptel-log-level 'debug)
+  (setq
+   gptel-default-mode 'org-mode
+   gptel-org-branching-context t
+  )
+  ;; if branching-context, prevent default prompt prefix from further nesting headings
+  (setf (alist-get 'org-mode gptel-prompt-prefix-alist) "@model\n")
+  (setf (alist-get 'org-mode gptel-response-prefix-alist) "@model\n")
   ;; Register the Ollama backend so it's available from the menu
   (gptel-make-ollama "Ollama"
     :host "localhost:11434"
