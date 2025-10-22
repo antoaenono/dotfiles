@@ -27,12 +27,17 @@
 ;; refresh your font settings. If Emacs still can't find your font, it likely
 ;; wasn't installed correctly. Font issues are rarely Doom issues!
 
-(setq user-full-name "Anton Bilbaeno"
-      user-mail-address "antoaenono@pm.me"
-      doom-theme 'doom-monokai-machine
-      display-line-numbers-type 'relative
-      mouse-drag-copy-region t
-      projectile-project-search-path '("~/source/" "~/org/" "~/.local/share/chezmoi/"))
+(setopt
+  user-full-name "Anton Bilbaeno"
+  user-mail-address "antoaenono@pm.me"
+  display-line-numbers-type 'relative
+  mouse-drag-copy-region t
+)
+
+(setq
+  doom-theme 'doom-monokai-machine
+  projectile-project-search-path '("~/source/" "~/org/" "~/.local/share/chezmoi/")
+)
 
 (defun tangle-moi ()
   "Tangle the current Org buffer, show the chezmoi diff, and ask to apply."
@@ -82,7 +87,15 @@
 (setq exec-path (cons (expand-file-name "~/.local/bin") exec-path))
 
 ;; ORG ;;
-(setq org-directory "~/org/")
+(setopt org-directory "~/org/")
+
+;; (after! org
+;;   ;; Add the 'titletoc' package to Org's list of LaTeX packages
+;;   (add-to-list 'org-latex-packages-alist '("titletoc" nil t))
+
+;;   ;; Use latexmk for PDF export
+;;   ;; (setq org-latex-to-pdf-process (list "latexmk %f"))
+;; )
 
 ;; more `<` tab completion templates aka "structure templates" -- orgmode.org/manual/Structure-Templates.html
 ;(after! org (add-to-list 'org-structure-template-alist
@@ -103,9 +116,9 @@
   :after org
   :hook (org-mode . org-appear-mode)
   :config
-  (setq org-appear-autoemphasis t ; _/**/_
-        org-appear-autolinks t ;; dun work on #+TRANSCLUSION directives. use `org-toggle-link-display`
-        org-appear-autoentities t ;; \alpha for α
+  (setopt org-appear-autoemphasis t ; _/**/_
+          org-appear-autolinks t ;; dun work on #+TRANSCLUSION directives. use `org-toggle-link-display`
+          org-appear-autoentities t ;; \alpha for α
   )
 )
 
@@ -128,21 +141,21 @@
   ; (require 'org-transclusion-indent-mode))
 
 ; roaman emacs... to gather
-(setq org-roam-directory "~/org/roam")
+(setopt org-roam-directory "~/org/roam")
 (org-roam-db-autosync-mode) ; docs say put this here[?]
 
 ;; lorem epsom
 ;; default is gemini, key in authinfo.gpg
 (use-package! gptel
   :config
-  (setq
+  (setopt
    gptel-log-level 'debug ;; see *gptel-log* buffer
    gptel-include-reasoning t
    gptel-include-tool-results t
    gptel-track-response t
   )
   ;; org mode for interacting with LLMs?!
-  (setq
+  (setopt
    gptel-default-mode 'org-mode
    gptel-org-branching-context t
   )
@@ -156,9 +169,9 @@
     :models '("gpt-oss" "qwen3"))
   ;; Register Gemini and set it as the default backend.
   ;; TODO gptel should automatically fetch the key from your .authinfo.gpg file, but i kept getting nil
-  (setq gptel-backend (gptel-make-gemini "Gemini" :stream t :key (gptel-api-key-from-auth-source "generativelanguage.googleapis.com")))
+  (setopt gptel-backend (gptel-make-gemini "Gemini" :stream t :key (gptel-api-key-from-auth-source "generativelanguage.googleapis.com")))
   ;; (Optional) Set a default model for the Gemini backend
-  (setq gptel-model 'gemini-pro-latest))
+  (setopt gptel-model 'gemini-pro-latest))
 
 
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
