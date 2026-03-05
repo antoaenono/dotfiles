@@ -42,8 +42,10 @@ echo "installed: doom deps"
 #
 ## install
 echo "install: doom"
-#git clone https://github.com/hlissner/doom-emacs ~/.emacs.d
-#~/.emacs.d/bin/doom install
+if [ ! -d ~/.emacs.d ]; then
+    git clone https://github.com/hlissner/doom-emacs ~/.emacs.d
+    ~/.emacs.d/bin/doom install
+fi
 echo "installed: doom"
 
 echo "install: oh-my-zsh"
