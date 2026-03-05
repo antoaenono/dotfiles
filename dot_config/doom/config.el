@@ -69,8 +69,6 @@
 (map! :g "M-Q" #'save-buffers-kill-terminal)
 ;; TODO the above doesn't work, it just adds a new binding, and Emacs Gui still captures Cmd+q
 
-(global-tab-line-mode 1) ; i see buffers in windows
-(tab-bar-mode 1) ; i see windows in frames
 
 ;; HASKELL
 ;; Hooks so haskell and literate haskell major modes trigger LSP setup
