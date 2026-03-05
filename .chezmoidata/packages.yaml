@@ -1,5 +1,7 @@
 packages:
   darwin:
+    taps:
+      - "jimeh/emacs-builds"
     brews:
       - "coreutils"
       - "fd"
@@ -10,3 +12,4 @@ packages:
       - "keycastr"
       - "ghostty"
       - "zed"
+      - "jimeh/emacs-builds/emacs-app"
