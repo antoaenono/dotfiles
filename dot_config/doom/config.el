@@ -144,35 +144,6 @@
 (setopt org-roam-directory "~/org/roam")
 (org-roam-db-autosync-mode) ; docs say put this here[?]
 
-;; lorem epsom
-;; default is gemini, key in authinfo.gpg
-(use-package! gptel
-  :config
-  (setopt
-   gptel-log-level 'debug ;; see *gptel-log* buffer
-   gptel-include-reasoning t
-   gptel-include-tool-results t
-   gptel-track-response t
-  )
-  ;; org mode for interacting with LLMs?!
-  (setopt
-   gptel-default-mode 'org-mode
-   gptel-org-branching-context t
-  )
-  ;; if branching-context, prevent default prompt prefix from further nesting headings
-  (setf (alist-get 'org-mode gptel-prompt-prefix-alist) "@model\n")
-  (setf (alist-get 'org-mode gptel-response-prefix-alist) "@model\n")
-  ;; Register the Ollama backend so it's available from the menu
-  (gptel-make-ollama "Ollama"
-    :host "localhost:11434"
-    :stream t
-    :models '("gpt-oss" "qwen3"))
-  ;; Register Gemini and set it as the default backend.
-  ;; TODO gptel should automatically fetch the key from your .authinfo.gpg file, but i kept getting nil
-  (setopt gptel-backend (gptel-make-gemini "Gemini" :stream t :key (gptel-api-key-from-auth-source "generativelanguage.googleapis.com")))
-  ;; (Optional) Set a default model for the Gemini backend
-  (setopt gptel-model 'gemini-pro-latest))
-
 
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
