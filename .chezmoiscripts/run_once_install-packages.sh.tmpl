@@ -18,19 +18,6 @@ EOF
 # no whitespace before EOF
 {{ end -}}
 
-# emacs-builds https://github.com/jimeh/emacs-builds
-# v30 whereas emacs-mac is v29
-# supports ARM apple silicon instructions
-echo "install: emacs"
-#brew tap jimeh/emacs-builds
-#brew install --cask jimeh/emacs-builds/emacs-app
-# after install instructions
-#Use Emacs.app as emacs CLI Tool
-#Installed via Homebrew Cask
-#The cask installation method sets up CLI usage automatically by exposing a emacs command. However it will launch Emacs into GUI mode. To instead have emacs in your terminal open a terminal instance of Emacs, add the following alias to your shell setup:
-#alias emacs="emacs -nw"
-echo "installed: emacs"
-
 # doom
 ## required dependencies
 echo "install: doom deps"
@@ -47,9 +34,5 @@ if [ ! -d ~/.emacs.d ]; then
     ~/.emacs.d/bin/doom install
 fi
 echo "installed: doom"
-
-echo "install: oh-my-zsh"
-
-echo "installed: oh-my-zsh"
 
 echo "*** End of Chezmoi install-packages script"
