@@ -184,7 +184,7 @@
            "* TODO %?\n%U\n%a\n" :clock-in t :clock-resume t)
           ("n" "Note" entry (file+headline "~/org/inbox.org" "Notes")
            "* %?\n%U\n")
-          ("p" "Paper Review" entry (file "~/org/inbox.org")
+          ("p" "Paper Review" entry (file+headline "~/org/inbox.org" "Papers")
            "* REVIEW %^{Title}\n:PROPERTIES:\n:AUTHOR: %^{Author}\n:YEAR: %^{Year}\n:DOI: %^{DOI}\n:END:\n%U\n\n** Summary\n%?\n\n** Key Contributions\n-\n\n** Methodology\n-\n\n** Relevance\n-\n\n** Notes\n-\n")
           ("r" "Reading Note" entry (file+headline "~/org/inbox.org" "Reading")
            "* %^{Title}\n%U\n%?\n"))))
