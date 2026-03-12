@@ -200,7 +200,7 @@
       org-agenda-file-regexp "\\`[^.].*\\.org\\'")
 (setq org-agenda-custom-commands
       '(("d" "Dashboard"
-         ((agenda "" ((org-agenda-span 'day)))
+         ((agenda "" ((org-agenda-span 14)))
           (todo "TODO" ((org-agenda-overriding-header "Tasks")))))))
 
 (defun my/org-agenda-files-recursive ()
