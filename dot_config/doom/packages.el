@@ -12,6 +12,16 @@
 (package! org-appear)
 (package! org-transclusion)
 
+;; citations and bibliography
+(package! citar)
+(package! citar-org-roam)
+
+;; pdf annotation
+(package! org-noter)
+
+;; roam graph visualization
+(package! org-roam-ui)
+
 
 ;; To install a package directly from a remote git repo, you must specify a
 ;; `:recipe'. You'll find documentation on what `:recipe' accepts here:
