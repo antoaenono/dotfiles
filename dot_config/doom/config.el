@@ -142,6 +142,51 @@
 (setopt org-roam-directory "~/org/roam")
 (org-roam-db-autosync-mode) ; docs say put this here[?]
 
+;; CITATIONS (citar + org-cite)
+(setq! citar-bibliography '("~/org/bib/references.bib")
+       citar-library-paths '("~/org/pdfs/")
+       citar-notes-paths '("~/org/notes/"))
+
+(after! oc
+  (setq org-cite-global-bibliography '("~/org/bib/references.bib")
+        org-cite-insert-processor 'citar
+        org-cite-follow-processor 'citar
+        org-cite-activate-processor 'citar))
+
+;; bridge citar with org-roam for note management
+(use-package! citar-org-roam
+  :after (citar org-roam)
+  :config
+  (citar-org-roam-mode)
+  (setq citar-org-roam-subdir "refs"))
+
+;; PDF ANNOTATION (org-noter)
+(use-package! org-noter
+  :after org
+  :config
+  (setq org-noter-notes-search-path '("~/org/notes/")
+        org-noter-always-create-frame nil
+        org-noter-doc-property-in-notes t))
+
+;; ROAM UI (graph visualization)
+(use-package! org-roam-ui
+  :after org-roam
+  :config
+  (setq org-roam-ui-sync-theme t
+        org-roam-ui-follow t
+        org-roam-ui-update-on-save t))
+
+;; CAPTURE TEMPLATES
+(after! org
+  (setq org-capture-templates
+        '(("t" "Task" entry (file+headline "~/org/inbox.org" "Tasks")
+           "* TODO %?\n%U\n%a\n" :clock-in t :clock-resume t)
+          ("n" "Note" entry (file+headline "~/org/inbox.org" "Notes")
+           "* %?\n%U\n")
+          ("p" "Paper Review" entry (file "~/org/inbox.org")
+           "* REVIEW %^{Title}\n:PROPERTIES:\n:AUTHOR: %^{Author}\n:YEAR: %^{Year}\n:DOI: %^{DOI}\n:END:\n%U\n\n** Summary\n%?\n\n** Key Contributions\n-\n\n** Methodology\n-\n\n** Relevance\n-\n\n** Notes\n-\n")
+          ("r" "Reading Note" entry (file+headline "~/org/inbox.org" "Reading")
+           "* %^{Title}\n%U\n%?\n"))))
 
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
