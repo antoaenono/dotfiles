@@ -187,6 +187,17 @@
           ("r" "Reading Note" entry (file+headline "~/org/inbox.org" "Reading")
            "* %^{Title}\n%U\n%?\n"))))
 
+;; REFILE
+(after! org
+  (setq org-refile-targets '((nil :maxlevel . 3)
+                             (org-agenda-files :maxlevel . 3))
+        org-refile-use-outline-path 'file
+        org-outline-path-complete-in-steps nil
+        org-refile-allow-creating-parent-nodes 'confirm))
+
+;; AGENDA
+(setq org-agenda-files '("~/org/inbox.org" "~/org/"))
+
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
 ;;
