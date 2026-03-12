@@ -166,7 +166,8 @@
   :config
   (setq org-noter-notes-search-path '("~/org/notes/")
         org-noter-always-create-frame nil
-        org-noter-doc-property-in-notes t))
+        org-noter-doc-property-in-notes t
+        org-noter-notes-window-location 'horizontal-split))
 
 ;; ROAM UI (graph visualization)
 (use-package! org-roam-ui
