@@ -181,7 +181,7 @@
 (after! org
   (setq org-capture-templates
         '(("t" "Task" entry (file+headline "~/org/inbox.org" "Tasks")
-           "* TODO %?\n%U\n%a\n" :clock-in t :clock-resume t)
+           "* TODO %?\n%U\n%a\n")
           ("n" "Note" entry (file+headline "~/org/inbox.org" "Notes")
            "* %?\n%U\n")
           ("r" "Reading Note" entry (file+headline "~/org/inbox.org" "Reading")
