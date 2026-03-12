@@ -195,8 +195,18 @@
         org-outline-path-complete-in-steps nil
         org-refile-allow-creating-parent-nodes 'confirm))
 
-;; AGENDA
-(setq org-agenda-files '("~/org/inbox.org" "~/org/"))
+;; AGENDA (recursive - finds TODOs in all subdirs)
+(setq org-agenda-files '("~/org/")
+      org-agenda-file-regexp "\\`[^.].*\\.org\\'")
+(setq org-agenda-custom-commands
+      '(("d" "Dashboard"
+         ((agenda "" ((org-agenda-span 'day)))
+          (todo "TODO" ((org-agenda-overriding-header "Tasks")))))))
+
+(defun my/org-agenda-files-recursive ()
+  "Build agenda file list recursively from ~/org/."
+  (directory-files-recursively "~/org/" "\\.org$"))
+(setq org-agenda-files (my/org-agenda-files-recursive))
 
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
