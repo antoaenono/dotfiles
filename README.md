@@ -1,2 +1,2 @@
 # Dotfiles
-Need I say more?
+Check the [literate configuration file](config.org).
