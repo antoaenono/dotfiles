@@ -36,7 +36,9 @@
 
 (setq
   doom-theme 'doom-monokai-machine
-  projectile-project-search-path '("~/source/" "~/org/" "~/.local/share/chezmoi/")
+  projectile-project-search-path '("~/source/" "~/.local/share/chezmoi/")
+  projectile-globally-ignored-directories '("node_modules" ".cache" "deps" "_build" "dist" ".elixir_ls" ".hex" ".mix")
+  projectile-ignored-projects '("~/source/archive/")
 )
 
 (defun tangle-moi ()
