@@ -1,6 +1,6 @@
 start-at-login = true
 
-# https://github.com/FelixKratz/JankyBorders 
+# https://github.com/FelixKratz/JankyBorders
 after-startup-command = [
   'exec-and-forget borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=7.0'
 ]
@@ -39,7 +39,7 @@ automatically-unhide-macos-hidden-apps = true
 [gaps]
     inner.horizontal = 2
     inner.vertical =   0
-    
+
     outer.left =       0
     outer.bottom =     2
     outer.top =        2
@@ -52,13 +52,13 @@ automatically-unhide-macos-hidden-apps = true
     alt-cmd-semicolon = 'mode service'
 
     # Layout https://nikitabobko.github.io/AeroSpace/commands#layout
-    alt-cmd-period= 'layout accordion vertical horizontal' 
+    alt-cmd-period= 'layout accordion vertical horizontal'
     alt-cmd-slash = 'layout tiles horizontal vertical'
 
     # Resize https://nikitabobko.github.io/AeroSpace/commands#resize
     alt-cmd-minus = 'resize smart -50'
     alt-cmd-equal = 'resize smart +50'
-    
+
     # Focus https://nikitabobko.github.io/AeroSpace/commands#focus
     alt-cmd-h = 'focus left'
     alt-cmd-left = 'focus left'
@@ -78,7 +78,7 @@ automatically-unhide-macos-hidden-apps = true
     ctrl-alt-cmd-up = 'move up'
     ctrl-alt-cmd-l = 'move right'
     ctrl-alt-cmd-right = 'move right'
-    
+
     # Workspace recent https://nikitabobko.github.io/AeroSpace/commands#workspace-back-and-forth
     alt-cmd-tab = 'workspace-back-and-forth'
     # Workspace monitor https://nikitabobko.github.io/AeroSpace/commands#move-workspace-to-monitor
@@ -171,7 +171,7 @@ automatically-unhide-macos-hidden-apps = true
 
 # To find an `app-id`, use `aerospace list-apps`
 # https://nikitabobko.github.io/AeroSpace/commands#list-apps
- 
+
 # Automatically run functions for specific windows
 # https://nikitabobko.github.io/AeroSpace/guide#on-window-detected-callback
 

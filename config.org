@@ -4,7 +4,7 @@
 #+OPTIONS: h:8
 
 * Welcome to Anton's dotfiles
-Welcome to this *`org`* document.
+Welcome to this *org* document.
 It's a mix of writing and code... just some symbols...
 
 It's written in the _literate_ style [Donald Knuth].
@@ -12,9 +12,9 @@ This "literate dotfile .org document" is the "single source of truth" for config
 Every time I change something... it is /described/ here *first*.
 Then, the code is /tangled/.
 
-If yer readin' in a web browser, you'll see only de code. You're missing the magic links of `org`.
-IRL (emacs, org-mode) each code block iz manually *linked* to a specific file (a.k.a. `tangled`; i.e. automatically exported, in order of occurrence, to a file).
-You gotta read it in emacs to see the links.
+If yer readin' in a web browser, you'll see only de code. You're missing the magic links of =org=.
+IRL (emacs, org-mode) each code block iz manually *linked* to a specific file (a.k.a. =tangled=; i.e. automatically exported, in order of occurrence, to a file).
+You gotta read it in =emacs= to see the magic of =org=.
 
 One of these lifetimes, emacs will find you.
 
@@ -24,20 +24,18 @@ The /tangle/ of *code* /within/ these *writings*... it feels
 : your code should tell a story
 
 * Workflow; How To Use This
-Accepting the practice of writing a literate configuration means adapting to a more complicated workflow.
-There is now an extra step to update your dotfiles.
+Accepting the practice of writing a literate config means accepting a more complicated workflow.
+There is now an extra step to update your dotfiles (the code blocks must be =tangled=).
 
-Instead of editing your dotfiles directly
-...now we must:
-1. update the code in this document
-2. run a command to export that code to the right place
+Instead of editing our dotfiles directly, we must:
+1. update this document
+2. run a command (=tangle=) to export that code to the right place
 
-*However*, we're gonna write a script to help us with that.
-Also, we already have nearly that exact same extra step by accepting to use `chezmoi`, so it's no big deal.
-
+We are already using ~chezmoi~, so we have nearly the same extra step already.
+We'll write a help script to help us with these extra steps.
 Run the helper !!M-x tangle-moi!! to:
 1. *save* and *tangle*, then
-3. *~chezmoi apply~*
+2. *~chezmoi apply~*
 
 * Physical
 ** Direct Input: hands & keyboard
@@ -56,7 +54,7 @@ Before installin' n-e-ting... check ya hands an' keys.
 [[https://github.com/antoaenono/key-zmk-adv360pro][Customization of the Kinesis Advantage 360 is in a separate repo]].
 
 **** Built-in Mac Keeb
-Handled below due to sequential nature of `tangle`.
+Handled below due to sequential nature of =tangling=.
 
 ** Alternative Inputs: voice, face, eyes, body
 - [[http://talonvoice.com][talon]]
@@ -66,121 +64,80 @@ Handled below due to sequential nature of `tangle`.
 ** Chezmoi
 *** First, get chezmoi!
 First, We need to:
-1. install ~chezmoi~
-2. fetch moi =dotfiles=
-   
-**** Homebrew
-MacPorts...? To use a Mac, we must `brew`.
+1. clone dotfiles repo
+2. run =install.sh=
 
-#+begin_src shell
-echo "Install `homebrew` via blindly trusting script..."
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+Usage:
+#+begin_example
+git clone github.com/antoaenono/dotfiles.git ~/.local/share/chezmoi
+cd ~/.local/share/chezmoi
+./install.sh
+#+end_example
+
+=install.sh= script:
+#+begin_src shell :tangle "./install.sh" :shebang "#!/bin/bash"
+set -e
+# Install Homebrew (if not already installed)
+if ! command -v brew &>/dev/null; then
+    # Download and run the official Homebrew installer
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    # Add brew to PATH for the current session (Apple Silicon path)
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+# Install chezmoi (dotfile manager)
+brew install chezmoi
+# Apply dotfiles, run install scripts
+chezmoi apply
 #+end_src
 
-***** Notes on the install script
+Notes on the Homebrew install:
 - creates a bunch of dirs
 - installs xcode command line tools
-- need to hit return to continue
-- output message after installing xcode:
-  Run these commands in your terminal to add Homebrew to your PATH:
-  #+begin_example
-  echo >> /Users/antoaenono/.zprofile
-  echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> /Users/antoaenono/.zprofile
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-  #+end_example
+- interactive: need to hit return to continue
+- ~brew help~ to get started
+- [[https://docs.brew.sh][Further documentation]]
 
-- Run brew help to get started
-- Further documentation:
-https://docs.brew.sh
-- type `brew` or `man brew` to learn more
+*** How to Chezmoi
+**** Configuration Files (dotfiles)
+Chezmoi places files relative to the =$HOME= directory.
 
-**** chezmoi
-#+begin_src shell
-brew install chezmoi
-#+end_src
-
-**** dotfiles
-`chezmoi` /is/ my dotfiles
-#+begin_src shell
-git clone github.com/antoaenono/dotfiles.git ~/.local/share/chezmoi
-#+end_src
-
-** Installation
+**** Scripts
 The =.chezmoiscripts=[fn:1] directory contains scripts which are not copied to =$HOME=.
-One of these 
 
-*** JankyBorders
-#+begin_src shell
-brew tap FelixKratz/formulae
-brew install borders
+** macOS
+*** Homebrew packages installation script
+This script runs =brew bundle= whenever the =Brewfile= content changes.
+
+#+begin_src shell :tangle "./.chezmoiscripts/darwin/run_onchange_before_01-install-packages.sh.tmpl" :shebang "#!/bin/bash"
+set -e
+# Brewfile hash: {{ include "Brewfile" | sha256sum }}
+brew bundle --file="{{ joinPath .chezmoi.sourceDir "Brewfile" }}"
 #+end_src
 
-*** bitwarden
-**** SSH agent
-This environment variable needs to be set to defer to Bitwarden's SSH agent on `commit` and `push`.
-#+begin_src shell
-export SSH_AUTH_SOCK=/Users/antoaenono/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock
+*** Core CLI tools
+#+begin_src ruby :tangle ./Brewfile
+brew "coreutils"
+brew "fd"
+brew "ripgrep"
+brew "tealdeer"
+brew "wget"
 #+end_src
 
 *** AeroSpace
-#+begin_src shell
-brew tap nikitabobko/aerospace
-brew install --cask nikitabobko/tap/aerospace
-#+end_src
-*** emacs
-**** mac standalone application
-https://github.com/jimeh/emacs-builds
-#+begin_src
-brew tap jimeh/emacs-builds
-brew install --cask jimeh/emacs-builds/emacs-app
+Tiling window manager
+
+#+begin_src ruby :tangle ./Brewfile
+tap "nikitabobko/tap"
+cask "nikitabobko/tap/aerospace"
 #+end_src
 
-**** doom
-***** add `doom` command to PATH
-in zshrc:
-#+begin_src shell
-# add `doom` helper command to PATH
-export PATH="$HOME/.emacs.d/bin:$PATH"
-echo "`doom` added to path: eg `doom sync`"
-#+end_src
-*** ollama
-**** homebrew
-***** CLI only
-#+begin_src shell
-brew install ollama
-#+end_src
-
-***** GUI
-#+begin_src shell
-brew install --cask ollama-app
-#+end_src
-
-**** official installer from website
-  https://ollama.com/download
-  installs both CLI and GUI
-
-*** zsh
-#+begin_example
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-#+end_example
-
-**** help
-~alias~ to show all aliases
-
-**** starship
-#+begin_example
-curl -sS https://starship.rs/install.sh | sh
-#+end_example
-
-** Configuration
-*** AeroSpace
 **** Commands
 All commands: https://nikitabobko.github.io/AeroSpace/commands
 
 Run commands from:
 1. terminal (prefix with ~aerospace~)
 2. key binding
- 
+
 If shell completion is working, try ~aerospace TAB~ to see all commands.
 
 Example: open terminal with alt + enter shortcut (like in i3)
@@ -198,7 +155,7 @@ end tell'
 #+begin_src toml :tangle "./dot_config/aerospace/aerospace.toml"
 start-at-login = true
 
-# https://github.com/FelixKratz/JankyBorders 
+# https://github.com/FelixKratz/JankyBorders
 after-startup-command = [
   'exec-and-forget borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=7.0'
 ]
@@ -233,7 +190,7 @@ automatically-unhide-macos-hidden-apps = true
 Key-mapping
 - don't think I need this any more...
 - not sure what it's for since we override bindings anyway
-#+begin_src toml 
+#+begin_src toml
 # https://nikitabobko.github.io/AeroSpace/guide#key-mapping
 # [key-mapping]
 #     preset = 'qwerty' # qwerty|dvorak|colemak
@@ -252,7 +209,7 @@ Gaps
 [gaps]
     inner.horizontal = 2
     inner.vertical =   0
-    
+
     outer.left =       0
     outer.bottom =     2
     outer.top =        2
@@ -283,13 +240,13 @@ Gaps
     alt-cmd-semicolon = 'mode service'
 
     # Layout https://nikitabobko.github.io/AeroSpace/commands#layout
-    alt-cmd-period= 'layout accordion vertical horizontal' 
+    alt-cmd-period= 'layout accordion vertical horizontal'
     alt-cmd-slash = 'layout tiles horizontal vertical'
 
     # Resize https://nikitabobko.github.io/AeroSpace/commands#resize
     alt-cmd-minus = 'resize smart -50'
     alt-cmd-equal = 'resize smart +50'
-    
+
     # Focus https://nikitabobko.github.io/AeroSpace/commands#focus
     alt-cmd-h = 'focus left'
     alt-cmd-left = 'focus left'
@@ -309,7 +266,7 @@ Gaps
     ctrl-alt-cmd-up = 'move up'
     ctrl-alt-cmd-l = 'move right'
     ctrl-alt-cmd-right = 'move right'
-    
+
     # Workspace recent https://nikitabobko.github.io/AeroSpace/commands#workspace-back-and-forth
     alt-cmd-tab = 'workspace-back-and-forth'
     # Workspace monitor https://nikitabobko.github.io/AeroSpace/commands#move-workspace-to-monitor
@@ -408,7 +365,7 @@ Gaps
 #+begin_src toml :tangle "./dot_config/aerospace/aerospace.toml"
 # To find an `app-id`, use `aerospace list-apps`
 # https://nikitabobko.github.io/AeroSpace/commands#list-apps
- 
+
 # Automatically run functions for specific windows
 # https://nikitabobko.github.io/AeroSpace/guide#on-window-detected-callback
 
@@ -445,14 +402,70 @@ Gaps
   run = ['move-node-to-workspace Z']
 #+end_src
 
-*** built-in keeb
+*** BitWarden
+**** SSH agent
+To defer to Bitwarden's SSH agent on `commit` and `push`,
+this environment variable must be set:
 #+begin_src shell
-# colemak-dh was originally called -dhm. now, m is implied.
-# ISO: z at bottom left
-echo "homebrew: colemak-dh keyboard variant"
-brew install --cask colemak-dh
-echo "log out for new keyboard layout to take affect"
+export SSH_AUTH_SOCK=$HOME/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock
 #+end_src
+
+*** Emacs
+This [[https://github.com/jimeh/emacs-builds][standalone Mac application]] is well maintained.
+#+begin_src ruby :tangle ./Brewfile
+tap "jimeh/emacs-builds"
+cask "jimeh/emacs-builds/emacs-app"
+#+end_src
+
+**** Doom
+***** Download (Install)
+#+begin_src shell :tangle "./.chezmoiscripts/darwin/run_once_before_02-bootstrap-doom.sh" :shebang "#!/bin/bash"
+set -e
+xcode-select -p &>/dev/null || xcode-select --install
+if [ ! -d "$HOME/.emacs.d" ]; then
+    git clone --depth=1 https://github.com/doomemacs/doomemacs "$HOME/.emacs.d"
+    "$HOME/.emacs.d/bin/doom" install
+fi
+#+end_src
+
+***** TODO Add ~doom~ command to =PATH= (in =.zshrc=)
+#+begin_src shell
+# add `doom` helper command to PATH
+export PATH="$HOME/.emacs.d/bin:$PATH"
+echo "`doom` added to path: eg `doom sync`"
+#+end_src
+
+*** JankyBorders
+Window borders for the tiling window manager.
+#+begin_src ruby :tangle ./Brewfile
+tap "FelixKratz/formulae"
+brew "FelixKratz/formulae/borders"
+#+end_src
+
+*** Shell (zsh)
+**** oh-my-zsh
+#+begin_src shell :tangle "./.chezmoiscripts/darwin/run_once_before_03-bootstrap-shell.sh" :shebang "#!/bin/bash"
+set -e
+if [ ! -d "$HOME/.oh-my-zsh" ]; then
+    git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$HOME/.oh-my-zsh"
+fi
+#+end_src
+
+**** starship
+#+begin_src ruby :tangle ./Brewfile
+brew "starship"
+#+end_src
+
+*** Utilities
+#+begin_src ruby :tangle ./Brewfile
+cask "keycastr"
+cask "ghostty"
+cask "zed"
+brew "gnupg"
+brew "pinentry-mac"
+#+end_src
+
+** Cross-platform
 
 *** git
 **** aliases
@@ -530,7 +543,7 @@ Trying to access again from Emacs fails, bcuz ~gpg~ subprocess isn't connected.
 brew install pinentry-mac
 #+end_example
 
-Add to =~/.gnupg/gpg-agent.conf= 
+Add to =~/.gnupg/gpg-agent.conf=
 #+begin_example
 pinentry-program /opt/homebrew/bin/pinentry-mac
 #+end_example
@@ -545,4 +558,3 @@ Now when accessing =./authinfo.gpg=, dialog should appear for passphrase.
 * Footnotes
 
 [fn:1] https://www.chezmoi.io/reference/special-directories/chezmoiscripts/]
- 

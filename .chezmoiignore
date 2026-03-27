@@ -1,3 +1,9 @@
 **/README.*
 config.org
-install-prerequisites.sh
+install.sh
+Brewfile
+
+# Skip macOS-only scripts on non-macOS systems
+{{ if ne .chezmoi.os "darwin" }}
+.chezmoiscripts/darwin/**
+{{ end }}
