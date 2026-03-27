@@ -11,3 +11,6 @@ fi
 brew install chezmoi
 # Apply dotfiles, run install scripts
 chezmoi apply
+
+echo ""
+echo "Done. Restart your computer to ensure everything is loaded correctly."

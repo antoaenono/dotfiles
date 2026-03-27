@@ -88,6 +88,9 @@ fi
 brew install chezmoi
 # Apply dotfiles, run install scripts
 chezmoi apply
+
+echo ""
+echo "Done. Restart your computer to ensure everything is loaded correctly."
 #+end_src
 
 Notes on the Homebrew install:
@@ -114,6 +117,106 @@ set -e
 brew bundle --file="{{ joinPath .chezmoi.sourceDir "Brewfile" }}"
 #+end_src
 
+*** Shell (zsh)
+**** Configuration Files
+These are documented below in the in order that they are loaded.
+
+***** zshenv
+Every shell (login, interactive, script). Loaded first, always.
+The =~/.zshenv= is a symlink to =~/.config/zsh/.zshenv=, which bootstraps =ZDOTDIR= so zsh finds the rest of its config in =~/.config/zsh/=.
+
+Symlink:
+#+begin_src fundamental :tangle "./symlink_dot_zshenv"
+/Users/antoaenono/.config/zsh/.zshenv
+#+end_src
+
+#+begin_src shell :tangle "./dot_config/zsh/dot_zshenv"
+export XDG_CONFIG_HOME=${XDG_CONFIG_HOME:=${HOME}/.config}
+export ZDOTDIR=${ZDOTDIR:=${XDG_CONFIG_HOME}/zsh}
+#+end_src
+
+***** zprofile
+Login shells only, before =.zshrc=. Runs once at login, not every new tab.
+
+#+begin_src shell :tangle "./dot_config/zsh/dot_zprofile"
+# Set PATH for Homebrew
+eval "$(/opt/homebrew/bin/brew shellenv)"
+#+end_src
+
+***** zshrc
+Interactive shells only. Every new terminal tab.
+This is where the bulk of shell config lives.
+
+#+begin_src shell :tangle "./dot_config/zsh/dot_zshrc"
+# Path to your Oh My Zsh installation.
+export ZSH="$ZDOTDIR/ohmyzsh"
+
+# oh-my-zsh: update behavior
+zstyle ':omz:update' mode reminder
+
+# oh-my-zsh: plugins
+plugins=(git starship)
+
+source $ZSH/oh-my-zsh.sh
+
+# Aliases
+source ~/.config/zsh/alias.zsh
+
+# Functions
+source ~/.config/zsh/function.zsh
+
+# Bitwarden SSH Agent
+export SSH_AUTH_SOCK=$HOME/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock
+
+# Tealdeer
+export TEALDEER_CONFIG_DIR=$HOME/.config/tealdeer
+
+# doom
+export PATH="$HOME/.emacs.d/bin:$PATH"
+
+# mise
+eval "$(mise activate zsh)"
+
+# haskell
+export PATH="$HOME/.ghcup/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+
+# starship prompt
+eval "$(starship init zsh)"
+#+end_src
+
+***** zlogin
+Login shells only, after =.zshrc=. Not currently used.
+
+***** zlogout
+On shell exit. Not currently used.
+
+**** aliases
+#+begin_src shell :tangle "./dot_config/zsh/alias.zsh"
+alias h='history'
+alias l='ls -la'
+#+end_src
+
+**** functions
+#+begin_src shell :tangle "./dot_config/zsh/function.zsh"
+# Create and then navigate to new dir
+mkd() {
+  mkdir -p "$1" && cd "$1"
+}
+#+end_src
+
+**** oh-my-zsh
+#+begin_src shell :tangle "./.chezmoiscripts/darwin/run_once_before_03-bootstrap-shell.sh" :shebang "#!/bin/bash"
+set -e
+if [ ! -d "$HOME/.oh-my-zsh" ]; then
+    git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$HOME/.oh-my-zsh"
+fi
+#+end_src
+
+**** starship
+#+begin_src ruby :tangle ./Brewfile
+brew "starship"
+#+end_src
 *** Core CLI tools
 #+begin_src ruby :tangle ./Brewfile
 brew "coreutils"
@@ -440,20 +543,6 @@ Window borders for the tiling window manager.
 #+begin_src ruby :tangle ./Brewfile
 tap "FelixKratz/formulae"
 brew "FelixKratz/formulae/borders"
-#+end_src
-
-*** Shell (zsh)
-**** oh-my-zsh
-#+begin_src shell :tangle "./.chezmoiscripts/darwin/run_once_before_03-bootstrap-shell.sh" :shebang "#!/bin/bash"
-set -e
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$HOME/.oh-my-zsh"
-fi
-#+end_src
-
-**** starship
-#+begin_src ruby :tangle ./Brewfile
-brew "starship"
 #+end_src
 
 *** Utilities
