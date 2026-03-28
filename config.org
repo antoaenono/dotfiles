@@ -1118,7 +1118,7 @@ cask "zed"
 #+end_src
 
 Settings
-#+begin_src jsonc :tangle "./dot_config/zed/settings.json"
+#+begin_src jsonc :tangle "./dot_config/zed/private_settings.json"
 // Zed settings
 //
 // For information on how to configure Zed, see the Zed
