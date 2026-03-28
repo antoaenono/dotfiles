@@ -18,7 +18,8 @@ brew "FelixKratz/formulae/borders"
 
 cask "zed"
 
-cask "keycastr"
 cask "ghostty"
+
+cask "keycastr"
 brew "gnupg"
 brew "pinentry-mac"
