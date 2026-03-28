@@ -118,16 +118,25 @@ brew bundle --file="{{ joinPath .chezmoi.sourceDir "Brewfile" }}"
 #+end_src
 
 *** Shell (zsh)
-**** Configuration Files
-These are documented below in the in order that they are loaded.
+**** oh-my-zsh
+#+begin_src shell :tangle "./.chezmoiscripts/darwin/run_once_before_02-bootstrap-shell.sh" :shebang "#!/bin/bash"
+set -e
+if [ ! -d "$HOME/.oh-my-zsh" ]; then
+    git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$HOME/.oh-my-zsh"
+fi
+#+end_src
+
+**** Zsh Configuration Files
+These are documented in order they are loaded.
 
 ***** zshenv
 Every shell (login, interactive, script). Loaded first, always.
 The =~/.zshenv= is a symlink to =~/.config/zsh/.zshenv=, which bootstraps =ZDOTDIR= so zsh finds the rest of its config in =~/.config/zsh/=.
+In other words, because we're using the XDG_CONFIG_HOME standard (~/.config directory), we need to symlink =.zshenv= which MUST be in the home directory.
 
 Symlink:
-#+begin_src fundamental :tangle "./symlink_dot_zshenv"
-/Users/antoaenono/.config/zsh/.zshenv
+#+begin_src fundamental :tangle "./symlink_dot_zshenv.tmpl"
+{{ .chezmoi.homeDir }}/.config/zsh/.zshenv
 #+end_src
 
 #+begin_src shell :tangle "./dot_config/zsh/dot_zshenv"
@@ -148,15 +157,10 @@ Interactive shells only. Every new terminal tab.
 This is where the bulk of shell config lives.
 
 #+begin_src shell :tangle "./dot_config/zsh/dot_zshrc"
-# Path to your Oh My Zsh installation.
+# oh-my-zsh
 export ZSH="$ZDOTDIR/ohmyzsh"
-
-# oh-my-zsh: update behavior
 zstyle ':omz:update' mode reminder
-
-# oh-my-zsh: plugins
 plugins=(git starship)
-
 source $ZSH/oh-my-zsh.sh
 
 # Aliases
@@ -164,25 +168,6 @@ source ~/.config/zsh/alias.zsh
 
 # Functions
 source ~/.config/zsh/function.zsh
-
-# Bitwarden SSH Agent
-export SSH_AUTH_SOCK=$HOME/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock
-
-# Tealdeer
-export TEALDEER_CONFIG_DIR=$HOME/.config/tealdeer
-
-# doom
-export PATH="$HOME/.emacs.d/bin:$PATH"
-
-# mise
-eval "$(mise activate zsh)"
-
-# haskell
-export PATH="$HOME/.ghcup/bin:$PATH"
-export PATH="$HOME/.local/bin:$PATH"
-
-# starship prompt
-eval "$(starship init zsh)"
 #+end_src
 
 ***** zlogin
@@ -205,18 +190,12 @@ mkd() {
 }
 #+end_src
 
-**** oh-my-zsh
-#+begin_src shell :tangle "./.chezmoiscripts/darwin/run_once_before_03-bootstrap-shell.sh" :shebang "#!/bin/bash"
-set -e
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$HOME/.oh-my-zsh"
-fi
-#+end_src
-
 **** starship
 #+begin_src ruby :tangle ./Brewfile
 brew "starship"
 #+end_src
+
+Starship init is tangled at the end of =** macOS= to ensure it runs after all PATH modifications.
 *** Core CLI tools
 #+begin_src ruby :tangle ./Brewfile
 brew "coreutils"
@@ -509,7 +488,8 @@ Gaps
 **** SSH agent
 To defer to Bitwarden's SSH agent on `commit` and `push`,
 this environment variable must be set:
-#+begin_src shell
+#+begin_src shell :tangle "./dot_config/zsh/dot_zshrc"
+# Bitwarden SSH Agent
 export SSH_AUTH_SOCK=$HOME/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock
 #+end_src
 
@@ -522,7 +502,7 @@ cask "jimeh/emacs-builds/emacs-app"
 
 **** Doom
 ***** Download (Install)
-#+begin_src shell :tangle "./.chezmoiscripts/darwin/run_once_before_02-bootstrap-doom.sh" :shebang "#!/bin/bash"
+#+begin_src shell :tangle "./.chezmoiscripts/darwin/run_once_before_03-bootstrap-doom.sh" :shebang "#!/bin/bash"
 set -e
 xcode-select -p &>/dev/null || xcode-select --install
 if [ ! -d "$HOME/.emacs.d" ]; then
@@ -531,11 +511,30 @@ if [ ! -d "$HOME/.emacs.d" ]; then
 fi
 #+end_src
 
-***** TODO Add ~doom~ command to =PATH= (in =.zshrc=)
-#+begin_src shell
-# add `doom` helper command to PATH
+***** =doom= command in =PATH=
+#+begin_src shell :tangle "./dot_config/zsh/dot_zshrc"
+# doom
 export PATH="$HOME/.emacs.d/bin:$PATH"
-echo "`doom` added to path: eg `doom sync`"
+#+end_src
+
+*** Tealdeer
+#+begin_src shell :tangle "./dot_config/zsh/dot_zshrc"
+# Tealdeer
+export TEALDEER_CONFIG_DIR=$HOME/.config/tealdeer
+#+end_src
+
+*** mise
+Version manager for dev tools.
+#+begin_src shell :tangle "./dot_config/zsh/dot_zshrc"
+# mise
+eval "$(mise activate zsh)"
+#+end_src
+
+*** Haskell
+#+begin_src shell :tangle "./dot_config/zsh/dot_zshrc"
+# haskell
+export PATH="$HOME/.ghcup/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 #+end_src
 
 *** JankyBorders

@@ -1,3 +1,5 @@
+brew "starship"
+
 brew "coreutils"
 brew "fd"
 brew "ripgrep"
@@ -12,8 +14,6 @@ cask "jimeh/emacs-builds/emacs-app"
 
 tap "FelixKratz/formulae"
 brew "FelixKratz/formulae/borders"
-
-brew "starship"
 
 cask "keycastr"
 cask "ghostty"
