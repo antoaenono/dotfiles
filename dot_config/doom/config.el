@@ -36,6 +36,9 @@
 
 (setq
   doom-theme 'doom-monokai-machine
+)
+
+(setq
   projectile-project-search-path '("~/source/" "~/.local/share/chezmoi/")
   projectile-globally-ignored-directories '("node_modules" ".cache" "deps" "_build" "dist" ".elixir_ls" ".hex" ".mix")
   projectile-ignored-projects '("~/source/archive/")
@@ -65,7 +68,7 @@
 ;; note: in org files 80 chars is /on top/ of the spacing under the heading
 (setq-default fill-column 80)
 (global-display-fill-column-indicator-mode 1)
- 
+
 ;; Rebind "quit" to Cmd-Shift-q to avoid conflict with M-q (fill-paragraph)
 ;; ...shouldn't be so easy to quit anyway!
 (map! :g "M-Q" #'save-buffers-kill-terminal)
