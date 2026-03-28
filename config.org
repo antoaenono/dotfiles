@@ -99,6 +99,12 @@ Notes on the Homebrew install:
 - interactive: need to hit return to continue
 - ~brew help~ to get started
 - [[https://docs.brew.sh][Further documentation]]
+  
+*** Configuration
+#+begin_src toml :tangle "./dot_config/chezmoi/chezmoi.toml"
+[scriptEnv]
+    VAR_IN_SCRIPT = "a_value"
+#+end_src
 
 ** macOS
 *** Homebrew Packages via Brewfile
