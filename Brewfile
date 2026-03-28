@@ -16,8 +16,9 @@ brew "tealdeer"
 tap "FelixKratz/formulae"
 brew "FelixKratz/formulae/borders"
 
+cask "zed"
+
 cask "keycastr"
 cask "ghostty"
-cask "zed"
 brew "gnupg"
 brew "pinentry-mac"

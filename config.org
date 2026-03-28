@@ -511,6 +511,7 @@ export PATH="$HOME/.emacs.d/bin:$PATH"
 
 *** Tealdeer
 Community-maintained =tldr= pages. Quick command reference.
+
 #+begin_src ruby :tangle ./Brewfile
 brew "tealdeer"
 #+end_src
@@ -582,11 +583,95 @@ tap "FelixKratz/formulae"
 brew "FelixKratz/formulae/borders"
 #+end_src
 
+*** Zed
+Installation
+#+begin_src ruby :tangle ./Brewfile
+cask "zed"
+#+end_src
+
+Settings
+#+begin_src jsonc :tangle "./dot_config/zed/settings.json"
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run `zed: open default settings` from the
+// command palette (cmd-shift-p / ctrl-shift-p)
+{
+  "edit_predictions": {
+    "provider": "none"
+  },
+  "context_servers": {
+    "mcp-server-context7": {
+      "enabled": false,
+      "settings": {}
+    }
+  },
+  "soft_wrap": "editor_width",
+  "agent": {
+    "tool_permissions": {
+      "default": "allow"
+    },
+    "play_sound_when_agent_done": true,
+    "default_profile": "write",
+    "default_model": {
+      "provider": "zed.dev",
+      "model": "claude-opus-4-1-thinking"
+    },
+    "model_parameters": []
+  },
+  "ui_font_size": 16,
+  "buffer_font_size": 15,
+  "theme": {
+    "mode": "system",
+    "light": "One Light",
+    "dark": "One Dark"
+  },
+  "vim_mode": true,
+  "relative_line_numbers": "enabled"
+}
+#+end_src
+
+Keymap
+#+begin_src jsonc :tangle "./dot_config/zed/keymap.json"
+// Zed keymap
+//
+// For information on binding keys, see the Zed
+// documentation: https://zed.dev/docs/key-bindings
+//
+// To see the default key bindings run `zed: open default keymap`
+// from the command palette.
+[
+  {
+    "context": "Workspace",
+    "bindings": {
+      // "shift shift": "file_finder::Toggle"
+    }
+  },
+  {
+    "context": "Editor && vim_mode == insert",
+    "bindings": {
+      "j k": "vim::NormalBefore"
+    }
+  }
+  // {
+  //   "context": "Editor && vim_mode == normal && vim_operator == none",
+  //   "bindings": {
+  //     "n": "vim::Left",
+  //     "e": "vim::Down",
+  //     "i": "vim::Up",
+  //     "o": "vim::Right"
+  //   }
+  // }
+]
+#+end_src
+
 *** Utilities
 #+begin_src ruby :tangle ./Brewfile
 cask "keycastr"
 cask "ghostty"
-cask "zed"
 brew "gnupg"
 brew "pinentry-mac"
 #+end_src
