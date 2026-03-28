@@ -100,15 +100,8 @@ Notes on the Homebrew install:
 - ~brew help~ to get started
 - [[https://docs.brew.sh][Further documentation]]
 
-*** How to Chezmoi
-**** Configuration Files (dotfiles)
-Chezmoi places files relative to the =$HOME= directory.
-
-**** Scripts
-The =.chezmoiscripts=[fn:1] directory contains scripts which are not copied to =$HOME=.
-
 ** macOS
-*** Homebrew packages installation script
+*** Homebrew Packages via Brewfile
 This script runs =brew bundle= whenever the =Brewfile= content changes.
 
 #+begin_src shell :tangle "./.chezmoiscripts/darwin/run_onchange_before_01-install-packages.sh.tmpl" :shebang "#!/bin/bash"
@@ -118,7 +111,7 @@ brew bundle --file="{{ joinPath .chezmoi.sourceDir "Brewfile" }}"
 #+end_src
 
 *** Shell (Zsh)
-**** oh-my-zsh Installation
+**** oh-my-zsh
 #+begin_src shell :tangle "./.chezmoiscripts/darwin/run_once_before_02-bootstrap-shell.sh" :shebang "#!/bin/bash"
 set -e
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
@@ -126,6 +119,26 @@ if [ ! -d "$HOME/.oh-my-zsh" ]; then
 fi
 #+end_src
 
+**** Starship
+#+begin_src ruby :tangle ./Brewfile
+brew "starship"
+#+end_src
+
+Starship init is handled by the oh-my-zsh =starship= plugin (see =plugins= in =.zshrc=).
+
+**** Aliases
+#+begin_src shell :tangle "./dot_config/zsh/alias.zsh"
+alias h='history'
+alias l='ls -la'
+#+end_src
+
+**** Functions
+#+begin_src shell :tangle "./dot_config/zsh/function.zsh"
+# Create and then navigate to new dir
+mkd() {
+  mkdir -p "$1" && cd "$1"
+}
+#+end_src
 **** Zsh Configuration Files
 These are documented in order they are loaded.
 
@@ -175,27 +188,6 @@ Login shells only, after =.zshrc=. Not currently used.
 
 ***** zlogout
 On shell exit. Not currently used.
-
-**** aliases
-#+begin_src shell :tangle "./dot_config/zsh/alias.zsh"
-alias h='history'
-alias l='ls -la'
-#+end_src
-
-**** functions
-#+begin_src shell :tangle "./dot_config/zsh/function.zsh"
-# Create and then navigate to new dir
-mkd() {
-  mkdir -p "$1" && cd "$1"
-}
-#+end_src
-
-**** starship
-#+begin_src ruby :tangle ./Brewfile
-brew "starship"
-#+end_src
-
-Starship init is handled by the oh-my-zsh =starship= plugin (see =plugins= in =.zshrc=).
 
 *** Core CLI tools
 #+begin_src ruby :tangle ./Brewfile
