@@ -24,15 +24,23 @@ The /tangle/ of *code* /within/ these *writings*... it feels
 : your code should tell a story
 
 * Workflow: How To Use This
+** Literate Programming
 Accepting the practice of writing a literate config means accepting a more complicated workflow.
-There is now an extra step to update your dotfiles (the code blocks must be =tangled=).
+Since we are writing a story alongside code as equals, we have to pick out all those code blocks n' put 'em in the right places.
+
+** Tangling
+This extra step to update our dotfiles (the code blocks must be =tangled=).
 
 Instead of editing our dotfiles directly, we must:
 1. update this document
 2. run a command (=tangle=) to export that code to the right place
 
-We are already using ~chezmoi~, so we have nearly that same extra step already.
-However, we'll write a script to help us with these extra steps.
+** Chezmoi
+We are already using ~chezmoi~, so we have nearly that same extra step already (in the form of ~apply~).
+
+** How To
+However, we'll write a script to help us with these *two* extra steps.
+
 Run the helper !!M-x tangle-moi!! to:
 1. *save* and *tangle*, then
 2. *~chezmoi apply~*
