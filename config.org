@@ -1060,6 +1060,14 @@ export PATH="$HOME/.emacs.d/bin:$PATH"
 ;; (unpin! t)
 #+end_src
 
+***** Snippets
+#+begin_src snippet :tangle "./dot_config/doom/snippets/text-mode/asb"
+# name: Full name: Anton Sebastian Bilbaeno
+# key: asb
+# --
+Anton Sebastian Bilbaeno
+#+end_src
+
 *** Tealdeer
 Community-maintained =tldr= pages. Quick command reference.
 
