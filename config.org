@@ -506,6 +506,14 @@ tap "jimeh/emacs-builds"
 cask "jimeh/emacs-builds/emacs-app"
 #+end_src
 
+**** Starting Emacs
+This alias is a historical hack to specify an emacs server (or, nothing -> ==""=) as the fallback.
+
+#+begin_src shell :tangle "./dot_config/zsh/alias.zsh"
+# ec: open emacsclient frame, detached (-n), starting daemon if needed
+alias ec='emacsclient -c -n --alternate-editor=""'
+#+end_src
+
 **** Doom
 ***** Install
 Download
@@ -774,6 +782,7 @@ export PATH="$HOME/.emacs.d/bin:$PATH"
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 #+end_src
+
 
 ****** init.el
 #+begin_src emacs-lisp :tangle "./dot_config/doom/init.el"
