@@ -753,6 +753,7 @@ export PATH="$HOME/.emacs.d/bin:$PATH"
   :after org
   :config
   (setq org-noter-always-create-frame nil
+        org-noter-kill-frame-at-session-end nil
         org-noter-doc-property-in-notes t
         org-noter-notes-window-location 'horizontal-split
         org-noter-highlight-selected-text t))
