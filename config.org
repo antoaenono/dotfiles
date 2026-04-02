@@ -744,9 +744,19 @@ export PATH="$HOME/.emacs.d/bin:$PATH"
   (add-to-list 'org-roam-capture-templates
                '("r" "reference" plain "%?"
                  :if-new (file+head "refs/${citar-citekey}.org"
-                                    ":PROPERTIES:\n:ROAM_REFS: @${citar-citekey}\n:NOTER_DOCUMENT: ${citar-file}\n:END:\n#+title: ${citar-title}\n")
+                                    ":PROPERTIES:\n:NOTER_DOCUMENT: ${citar-file}\n:END:\n#+title: ${citar-title}\n")
+                 :immediate-finish t
                  :unnarrowed t))
   (setq citar-org-roam-capture-template-key "r"))
+
+(defun my/citar-open-noter (key)
+  "Open roam note for KEY and start org-noter in a dedicated frame."
+  (interactive (list (citar-select-ref)))
+  (select-frame (make-frame))
+  (citar-open-notes (list key))
+  (org-noter))
+
+(map! :leader :desc "Open noter session" "n N" #'my/citar-open-noter)
 
 ;; PDF ANNOTATION (org-noter)
 (use-package! org-noter
