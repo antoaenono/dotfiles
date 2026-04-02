@@ -758,6 +758,19 @@ export PATH="$HOME/.emacs.d/bin:$PATH"
 
 (map! :leader :desc "Open noter session" "n p" #'my/citar-open-noter)
 
+(defun my/citar-close-noter ()
+  "Save notes and PDF annotations, end org-noter session, and close frame."
+  (interactive)
+  (org-noter--with-valid-session
+    (with-current-buffer (org-noter--session-notes-buffer session)
+      (save-buffer))
+    (with-current-buffer (org-noter--session-doc-buffer session)
+      (save-buffer)))
+  (org-noter-kill-session)
+  (delete-frame))
+
+(map! :leader :desc "Close noter session" "n q" #'my/citar-close-noter)
+
 ;; PDF ANNOTATION (org-noter)
 (use-package! org-noter
   :after org
