@@ -4,7 +4,21 @@ mkd() {
 }
 
 # ecc: interactive emacsclient - reports server status, then opens a frame
-ecc() {
+ecs() {
+  if [[ "$1" == "-k" ]]; then
+    if ! emacsclient -e t &>/dev/null; then
+      echo "no server running"
+      return 1
+    fi
+    read "reply?kill server? [y/n] "
+    if [[ "$reply" == "y" ]]; then
+      emacsclient -e '(kill-emacs)'
+      echo "server killed"
+    else
+      echo "aborted"
+    fi
+    return
+  fi
   if emacsclient -e t &>/dev/null; then
     echo "server: running"
   else
