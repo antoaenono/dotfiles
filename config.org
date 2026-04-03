@@ -617,6 +617,16 @@ export PATH="$HOME/.emacs.d/bin:$PATH"
   "Tangle the current Org buffer, show the chezmoi diff, and ask to apply."
   (interactive)
   (save-buffer)
+  (message "Ensuring tangle target directories exist...")
+  (let ((chezmoi-dir (expand-file-name "~/.local/share/chezmoi")))
+    (with-temp-buffer
+      (insert-file-contents (expand-file-name "config.org" chezmoi-dir))
+      (goto-char (point-min))
+      (while (re-search-forward ":tangle \"\\([^\"]+\\)\"" nil t)
+        (let* ((target (match-string 1))
+               (dir (file-name-directory
+                     (expand-file-name target chezmoi-dir))))
+          (make-directory dir t)))))
   (message "Tangling Org file...")
   (org-babel-tangle)
   (message "Tangling complete. Running 'chezmoi apply -vn'...")
@@ -858,7 +868,6 @@ export PATH="$HOME/.emacs.d/bin:$PATH"
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 #+end_src
-
 
 ****** init.el
 #+begin_src emacs-lisp :tangle "./dot_config/doom/init.el"
@@ -1416,7 +1425,6 @@ backend: auto
 # trigger: abbreviation you type
 # replace: expanded text
 matches:
-
   - trigger: ";hello"
     replace: "Hello, how are you?"
 #+end_src

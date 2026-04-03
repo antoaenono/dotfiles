@@ -1,0 +1,5 @@
+# trigger: abbreviation you type
+# replace: expanded text
+matches:
+  - trigger: ";hello"
+    replace: "Hello, how are you?"

@@ -48,6 +48,16 @@
   "Tangle the current Org buffer, show the chezmoi diff, and ask to apply."
   (interactive)
   (save-buffer)
+  (message "Ensuring tangle target directories exist...")
+  (let ((chezmoi-dir (expand-file-name "~/.local/share/chezmoi")))
+    (with-temp-buffer
+      (insert-file-contents (expand-file-name "config.org" chezmoi-dir))
+      (goto-char (point-min))
+      (while (re-search-forward ":tangle \"\\([^\"]+\\)\"" nil t)
+        (let* ((target (match-string 1))
+               (dir (file-name-directory
+                     (expand-file-name target chezmoi-dir))))
+          (make-directory dir t)))))
   (message "Tangling Org file...")
   (org-babel-tangle)
   (message "Tangling complete. Running 'chezmoi apply -vn'...")
