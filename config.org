@@ -781,6 +781,12 @@ export PATH="$HOME/.emacs.d/bin:$PATH"
         org-noter-notes-window-location 'horizontal-split
         org-noter-highlight-selected-text t))
 
+;; GLOSSARY / ACRONYMS
+(setq org-glossary-global-terms '("~/org/glossary.org"))
+(use-package! org-glossary
+  :after org
+  :hook (org-mode . org-glossary-mode))
+
 ;; ROAM UI (graph visualization)
 (use-package! org-roam-ui
   :after org-roam
@@ -1087,6 +1093,10 @@ export PATH="$HOME/.emacs.d/bin:$PATH"
 
 ;; roam graph visualization
 (package! org-roam-ui)
+
+;; glossary and acronym management
+(package! org-glossary
+  :recipe (:host github :repo "tecosaur/org-glossary"))
 
 
 ;; To install a package directly from a remote git repo, you must specify a

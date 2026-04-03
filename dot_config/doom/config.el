@@ -150,7 +150,7 @@
 ;; CITATIONS (citar + org-cite)
 (setq! citar-bibliography '("~/org/bib/references.bib")
        citar-library-paths '("~/org/pdfs/")
-       citar-notes-paths '("~/org/notes/"))
+       citar-notes-paths '("~/org/roam/refs/"))
 
 (after! oc
   (setq org-cite-global-bibliography '("~/org/bib/references.bib")
@@ -163,16 +163,60 @@
   :after (citar org-roam)
   :config
   (citar-org-roam-mode)
-  (setq citar-org-roam-subdir "refs"))
+  (setq citar-org-roam-subdir "refs"
+        citar-org-roam-note-title-template "${author}, ${title}"
+        citar-org-roam-template-fields
+        '((:citar-title   . ("title"))
+          (:citar-author  . ("author" "editor"))
+          (:citar-date    . ("date" "year" "issued"))
+          (:citar-pages   . ("pages"))
+          (:citar-type    . ("=type="))
+          (:citar-file    . ("file"))))
+  (add-to-list 'org-roam-capture-templates
+               '("r" "reference" plain "%?"
+                 :if-new (file+head "refs/${citar-citekey}.org"
+                                    ":PROPERTIES:\n:NOTER_DOCUMENT: ${citar-file}\n:END:\n#+title: ${citar-title}\n")
+                 :immediate-finish t
+                 :unnarrowed t))
+  (setq citar-org-roam-capture-template-key "r"))
+
+(defun my/citar-open-noter ()
+  "Open roam note and start org-noter in a dedicated frame."
+  (interactive)
+  (select-frame (make-frame))
+  (call-interactively #'citar-open-notes)
+  (org-noter))
+
+(map! :leader :desc "Open noter session" "n p" #'my/citar-open-noter)
+
+(defun my/citar-close-noter ()
+  "Save notes and PDF annotations, end org-noter session, and close frame."
+  (interactive)
+  (org-noter--with-valid-session
+    (with-current-buffer (org-noter--session-notes-buffer session)
+      (save-buffer))
+    (with-current-buffer (org-noter--session-doc-buffer session)
+      (save-buffer)))
+  (org-noter-kill-session)
+  (delete-frame))
+
+(map! :leader :desc "Close noter session" "n q" #'my/citar-close-noter)
 
 ;; PDF ANNOTATION (org-noter)
 (use-package! org-noter
   :after org
   :config
-  (setq org-noter-notes-search-path '("~/org/notes/")
-        org-noter-always-create-frame nil
+  (setq org-noter-always-create-frame nil
+        org-noter-kill-frame-at-session-end nil
         org-noter-doc-property-in-notes t
-        org-noter-notes-window-location 'horizontal-split))
+        org-noter-notes-window-location 'horizontal-split
+        org-noter-highlight-selected-text t))
+
+;; GLOSSARY / ACRONYMS
+(setq org-glossary-global-terms '("~/org/glossary.org"))
+(use-package! org-glossary
+  :after org
+  :hook (org-mode . org-glossary-mode))
 
 ;; ROAM UI (graph visualization)
 (use-package! org-roam-ui

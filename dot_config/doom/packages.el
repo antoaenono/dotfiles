@@ -22,6 +22,10 @@
 ;; roam graph visualization
 (package! org-roam-ui)
 
+;; glossary and acronym management
+(package! org-glossary
+  :recipe (:host github :repo "tecosaur/org-glossary"))
+
 
 ;; To install a package directly from a remote git repo, you must specify a
 ;; `:recipe'. You'll find documentation on what `:recipe' accepts here:
