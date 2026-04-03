@@ -23,3 +23,5 @@ cask "ghostty"
 cask "keycastr"
 brew "gnupg"
 brew "pinentry-mac"
+
+cask "espanso"

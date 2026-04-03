@@ -1376,7 +1376,50 @@ brew "gnupg"
 brew "pinentry-mac"
 #+end_src
 
+*** Espanso
+:PROPERTIES:
+:CUSTOM_ID: macos-espanso
+:END:
+#+begin_src ruby :tangle ./Brewfile
+cask "espanso"
+#+end_src
+
+On first install, espanso defaults to =~/Library/Application Support/espanso=.
+Move it so chezmoi can manage it via =~/.config/espanso=:
+#+begin_src sh
+espanso stop
+mv "$HOME/Library/Application Support/espanso" "$HOME/.config/espanso"
+#+end_src
+
+Config and snippets are tangled from [[#cfg-espanso][Cross-platform > Espanso]].
+
 ** Cross-platform
+
+*** Espanso
+:PROPERTIES:
+:CUSTOM_ID: cfg-espanso
+:END:
+Cross-platform text expander.
+
+**** Installation
+Mac: [[#macos-espanso][macOS > Espanso]]
+
+**** Config
+#+begin_src yaml :tangle "./dot_config/espanso/config/default.yml"
+# Espanso default configuration
+# https://espanso.org/docs/configuration/basics/
+backend: auto
+#+end_src
+
+**** Matches
+#+begin_src yaml :tangle "./dot_config/espanso/match/base.yml"
+# trigger: abbreviation you type
+# replace: expanded text
+matches:
+
+  - trigger: ";hello"
+    replace: "Hello, how are you?"
+#+end_src
 
 *** git
 **** aliases
