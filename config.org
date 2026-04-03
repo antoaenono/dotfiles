@@ -107,7 +107,7 @@ Notes on the Homebrew install:
 - interactive: need to hit return to continue
 - ~brew help~ to get started
 - [[https://docs.brew.sh][Further documentation]]
-  
+
 *** Configuration
 #+begin_src toml :tangle "./dot_config/chezmoi/chezmoi.toml"
 [scriptEnv]
@@ -881,7 +881,7 @@ export PATH="$HOME/.emacs.d/bin:$PATH"
 
        :completion
        ;;company           ; the ultimate code completion backend
-       (corfu +orderless)  ; complete with cap(f), cape and a flying feather!
+       ;;(corfu +orderless)  ; complete with cap(f), cape and a flying feather!
        ;;helm              ; the *other* search engine for love and life
        ;;ido               ; the other *other* search engine...
        ;;ivy               ; a search engine for love and life
