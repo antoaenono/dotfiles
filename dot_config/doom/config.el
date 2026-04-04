@@ -223,7 +223,8 @@
         org-noter-highlight-selected-text t))
 
 ;; GLOSSARY / ACRONYMS
-(setq org-glossary-global-terms '("~/org/glossary.org"))
+(setq org-link-descriptive t
+      org-glossary-global-terms '("~/org/glossary.org"))
 (use-package! org-glossary
   :after org
   :hook (org-mode . org-glossary-mode))
