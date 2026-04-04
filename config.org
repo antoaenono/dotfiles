@@ -798,6 +798,13 @@ export PATH="$HOME/.emacs.d/bin:$PATH"
   :after org
   :hook (org-mode . org-glossary-mode))
 
+;; ORG HEADING FACES (levels 5-8 inherit outline-4/foreground by default)
+(custom-set-faces!
+  '(org-level-5 :foreground "#f92672")  ; pink
+  '(org-level-6 :foreground "#fd971f")  ; orange
+  '(org-level-7 :foreground "#ae81ff")  ; purple
+  '(org-level-8 :foreground "#66d9ef")) ; teal
+
 ;; ROAM UI (graph visualization)
 (use-package! org-roam-ui
   :after org-roam
