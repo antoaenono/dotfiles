@@ -1435,6 +1435,9 @@ backend: auto
 matches:
   - trigger: ";hello"
     replace: "Hello, how are you?"
+
+  - trigger: "--dang"
+    replace: "--dangerously-skip-permissions"
 #+end_src
 
 *** Agent
