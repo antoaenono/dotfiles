@@ -185,7 +185,7 @@
   (add-to-list 'org-roam-capture-templates
                '("r" "reference" plain "%?"
                  :if-new (file+head "refs/${citar-citekey}.org"
-                                    ":PROPERTIES:\n:NOTER_DOCUMENT: ${citar-file}\n:END:\n#+title: ${citar-title}\n")
+                                    ":PROPERTIES:\n:NOTER_DOCUMENT: ${citar-file}\n:END:\n#+title: ${citar-title}\n#+DATE: %<%Y-%m-%d %a>\n#+PUBLISH: reading\n")
                  :immediate-finish t
                  :unnarrowed t))
   (setq citar-org-roam-capture-template-key "r"))
