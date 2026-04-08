@@ -130,9 +130,15 @@
       (1 '(face (:weight 'semi-bold
                            :box '(:line-width 2 :color "palegoldenrod"))))))))
 
+;; When S-TAB cycles to 'overview (all headings collapsed), jump to the first
+;; heading so you always land at the top of the file. Before jumping, push the
+;; current position onto the mark ring - but only if point is already past the
+;; first heading (avoids polluting the ring on repeated S-TAB cycles).
+;; To return: S-TAB to 'all to expand, then M-x pop-to-mark-command.
 (add-hook 'org-cycle-hook
   (defun my/org-cycle-goto-first-heading (state)
     (when (eq state 'overview)
+      ;; push mark only if we're not already at/before the first heading
       (unless (<= (point) (save-excursion (goto-char (point-min)) (re-search-forward org-heading-regexp nil t) (line-beginning-position)))
         (push-mark))
       (goto-char (point-min))
