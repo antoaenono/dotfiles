@@ -124,6 +124,15 @@
       (1 '(face (:weight 'semi-bold
                            :box '(:line-width 2 :color "palegoldenrod"))))))))
 
+(add-hook 'org-cycle-hook
+  (defun my/org-cycle-goto-first-heading (state)
+    (when (eq state 'overview)
+      (unless (<= (point) (save-excursion (goto-char (point-min)) (re-search-forward org-heading-regexp nil t) (line-beginning-position)))
+        (push-mark))
+      (goto-char (point-min))
+      (re-search-forward org-heading-regexp nil t)
+      (beginning-of-line))))
+
 ;; automatically show magic behind point
 (use-package! org-appear
   :after org
