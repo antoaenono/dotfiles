@@ -102,6 +102,12 @@
 ;; ORG ;;
 (setopt org-directory "~/org/")
 
+;; Disable org-element cache (Org 9.5+ bug): subtree and narrowed exports trigger
+;; cache revalidation on the temp export buffer, causing an infinite loop / hang.
+;; Full-document export is unaffected. Disabling the cache trades minor parse speed
+;; for reliable export at any scope.
+(setq org-element-use-cache nil)
+
 ;; (after! org
 ;;   ;; Add the 'titletoc' package to Org's list of LaTeX packages
 ;;   (add-to-list 'org-latex-packages-alist '("titletoc" nil t))
