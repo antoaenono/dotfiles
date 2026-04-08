@@ -8,6 +8,8 @@ brew "wget"
 tap "nikitabobko/tap"
 cask "nikitabobko/tap/aerospace"
 
+cask "mactex"
+
 tap "jimeh/emacs-builds"
 cask "jimeh/emacs-builds/emacs-app"
 

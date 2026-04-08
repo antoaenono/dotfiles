@@ -499,6 +499,24 @@ this environment variable must be set:
 export SSH_AUTH_SOCK=$HOME/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock
 #+end_src
 
+*** LaTeX
+#+begin_src ruby :tangle ./Brewfile
+cask "mactex"
+#+end_src
+
+After a major mactex upgrade, TeX Live regenerates [[https://www.tug.org/texlive/doc/fmtutil.html][format files]] (=fmtutil=) and font map files (=updmap=) on first run. This blocks any process that calls =pdflatex= synchronously (including Emacs during org export). See [[https://tug.org/texlive/Contents/live/texmf-dist/doc/texlive/texlive-en/texlive-en.html#x1-320003.4.4][TeX Live Guide §3.4.4: System font configuration]] and [[https://tug.org/texlive/scripts-sys-user.html][updmap/fmtutil sys vs user]] for background. The script below warms the cache after each mactex upgrade.
+
+#+begin_src shell :tangle "./.chezmoiscripts/darwin/run_onchange_before_04-warm-tex-cache.sh.tmpl" :shebang "#!/bin/bash"
+# mactex version: {{ output "brew" "list" "--cask" "--versions" "mactex" | trim }}
+# Warms TeX Live font and format caches on first run after install or upgrade.
+# Without this, the first pdflatex call blocks synchronously while regenerating
+# caches, which freezes any process waiting on it (e.g. Emacs during org export).
+# Only warms pdflatex; to warm all engines (xelatex, lualatex, etc.) use instead:
+#   fmtutil-user --all && updmap-user  (~90s)
+set -e
+pdflatex -interaction=nonstopmode /dev/null 2>/dev/null || true
+#+end_src
+
 *** Emacs
 This [[https://github.com/jimeh/emacs-builds][standalone Mac application]] is well maintained.
 #+begin_src ruby :tangle ./Brewfile
