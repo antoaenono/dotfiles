@@ -1,0 +1,9 @@
+#!/bin/bash
+# mactex version: {{ output "brew" "list" "--cask" "--versions" "mactex" | trim }}
+# Warms TeX Live font and format caches on first run after install or upgrade.
+# Without this, the first pdflatex call blocks synchronously while regenerating
+# caches, which freezes any process waiting on it (e.g. Emacs during org export).
+# Only warms pdflatex; to warm all engines (xelatex, lualatex, etc.) use instead:
+#   fmtutil-user --all && updmap-user  (~90s)
+set -e
+pdflatex -interaction=nonstopmode /dev/null 2>/dev/null || true
