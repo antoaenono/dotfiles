@@ -239,6 +239,7 @@
   :config
   (setq org-noter-always-create-frame nil
         org-noter-kill-frame-at-session-end nil
+        org-noter-auto-save-last-location nil
         org-noter-doc-property-in-notes t
         org-noter-notes-window-location 'horizontal-split
         org-noter-highlight-selected-text t))
