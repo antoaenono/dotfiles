@@ -1295,8 +1295,12 @@ Settings
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "indent_guides": {
+    "line_width": 1
+  },
   "edit_predictions": {
-    "provider": "none"
+    "mode": "subtle",
+    "provider": "zed"
   },
   "context_servers": {
     "mcp-server-context7": {
@@ -1309,16 +1313,18 @@ Settings
     "tool_permissions": {
       "default": "allow"
     },
-    "play_sound_when_agent_done": true,
+    "play_sound_when_agent_done": "never",
     "default_profile": "write",
     "default_model": {
-      "provider": "zed.dev",
-      "model": "claude-opus-4-1-thinking"
+      "effort": "medium",
+      "enable_thinking": true,
+      "provider": "google",
+      "model": "gemini-3.5-flash"
     },
     "model_parameters": []
   },
-  "ui_font_size": 16,
-  "buffer_font_size": 15,
+  "ui_font_size": 18.0,
+  "buffer_font_size": 15.0,
   "theme": {
     "mode": "system",
     "light": "One Light",
