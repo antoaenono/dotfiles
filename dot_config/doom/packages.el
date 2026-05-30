@@ -26,6 +26,9 @@
 (package! org-glossary
   :recipe (:host github :repo "tecosaur/org-glossary"))
 
+;; structural (AST-aware) diffs on demand from magit
+(package! difftastic)
+
 
 ;; To install a package directly from a remote git repo, you must specify a
 ;; `:recipe'. You'll find documentation on what `:recipe' accepts here:

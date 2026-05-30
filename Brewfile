@@ -13,6 +13,8 @@ cask "mactex"
 tap "jimeh/emacs-builds"
 cask "jimeh/emacs-builds/emacs-app"
 
+brew "difftastic"
+
 brew "tealdeer"
 
 tap "FelixKratz/formulae"

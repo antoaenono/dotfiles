@@ -328,3 +328,24 @@
 ;;
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
+
+;;; magit
+(after! magit
+  (setq magit-diff-refine-hunk 'all
+        magit-diff-highlight-trailing nil
+        magit-diff-paint-whitespace nil))
+
+(custom-set-faces!
+  '(magit-diff-added             :background unspecified)
+  '(magit-diff-added-highlight   :background unspecified)
+  '(magit-diff-removed           :background unspecified)
+  '(magit-diff-removed-highlight :background unspecified))
+
+;;; difftastic - AST-aware diffs, called on demand from magit
+(use-package! difftastic
+  :defer t
+  :init
+  (map! :leader
+        :prefix "g"
+        :desc "Difftastic show commit"   "D" #'difftastic-magit-show
+        :desc "Difftastic diff range"    "T" #'difftastic-magit-diff))

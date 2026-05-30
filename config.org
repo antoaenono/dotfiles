@@ -915,6 +915,32 @@ export PATH="$HOME/.emacs.d/bin:$PATH"
 ;;
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
+
+;;; magit
+(after! magit
+  (setq magit-diff-refine-hunk 'all
+        magit-diff-highlight-trailing nil
+        magit-diff-paint-whitespace nil))
+
+(custom-set-faces!
+  '(magit-diff-added             :background unspecified)
+  '(magit-diff-added-highlight   :background unspecified)
+  '(magit-diff-removed           :background unspecified)
+  '(magit-diff-removed-highlight :background unspecified))
+
+;;; difftastic - AST-aware diffs, called on demand from magit
+(use-package! difftastic
+  :defer t
+  :init
+  (map! :leader
+        :prefix "g"
+        :desc "Difftastic show commit"   "D" #'difftastic-magit-show
+        :desc "Difftastic diff range"    "T" #'difftastic-magit-diff))
+#+end_src
+
+Brewfile entry for the =difft= binary used by =difftastic.el=.
+#+begin_src ruby :tangle ./Brewfile
+brew "difftastic"
 #+end_src
 
 ****** init.el
@@ -1154,6 +1180,9 @@ export PATH="$HOME/.emacs.d/bin:$PATH"
 ;; glossary and acronym management
 (package! org-glossary
   :recipe (:host github :repo "tecosaur/org-glossary"))
+
+;; structural (AST-aware) diffs on demand from magit
+(package! difftastic)
 
 
 ;; To install a package directly from a remote git repo, you must specify a
