@@ -332,8 +332,8 @@ Gaps
     alt-cmd-slash = 'layout tiles horizontal vertical'
 
     # Resize https://nikitabobko.github.io/AeroSpace/commands#resize
-    alt-cmd-minus = 'resize smart -50'
-    alt-cmd-equal = 'resize smart +50'
+    alt-cmd-minus = 'resize smart -150'
+    alt-cmd-equal = 'resize smart +150'
 
     # Focus https://nikitabobko.github.io/AeroSpace/commands#focus
     alt-cmd-h = 'focus left'
