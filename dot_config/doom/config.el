@@ -348,4 +348,7 @@
   (map! :leader
         :prefix "g"
         :desc "Difftastic show commit"   "D" #'difftastic-magit-show
-        :desc "Difftastic diff range"    "T" #'difftastic-magit-diff))
+        :desc "Difftastic diff range"    "T" #'difftastic-magit-diff)
+  ;; Note: difftastic lands in doom's bottom popup (small). Press `C-w _` to
+  ;; maximize the window vertically, or `C-w o` to fill the frame.
+  )
