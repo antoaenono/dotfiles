@@ -25,3 +25,6 @@ eval "$(mise activate zsh)"
 # haskell
 export PATH="$HOME/.ghcup/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
+
+# omp (oh-my-pi) / bun global bins
+export PATH="$HOME/.bun/bin:$PATH"

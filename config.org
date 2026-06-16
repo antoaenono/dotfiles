@@ -1519,7 +1519,7 @@ matches:
 #+end_src
 
 *** Agent
-Claude Code configuration, tangled to =~/.claude/=.
+AI coding agents: Claude Code (configured below, tangled to =~/.claude/=) and =omp= (oh-my-pi).
 
 **** Instructions
 Global agent instructions
@@ -1540,6 +1540,14 @@ Never include "Generated with Claude Code" in PR descriptions.
 
 ## Pull request body template
 When creating or editing a PR, look for a `PULL_REQUEST_TEMPLATE.md` in `.github/` or the repo root and use it as the body structure. Fill in each section with real content. Reproduce all checklist items, checking off satisfied ones (`[x]`) and leaving the rest unchecked (`[ ]`). Never remove unchecked items or add sections not in the template.
+#+end_src
+
+**** omp (oh-my-pi)
+The =omp= coding agent, installed globally via =bun add -g @oh-my-pi/pi-coding-agent=.
+Bun drops its global binaries in =~/.bun/bin=, so that needs to be on =PATH=.
+#+begin_src shell :tangle "./dot_config/zsh/dot_zshrc"
+# omp (oh-my-pi) / bun global bins
+export PATH="$HOME/.bun/bin:$PATH"
 #+end_src
 
 **** Skills
