@@ -29,3 +29,5 @@ brew "gnupg"
 brew "pinentry-mac"
 
 cask "espanso"
+
+brew "git-absorb"

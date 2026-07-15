@@ -1838,6 +1838,15 @@ oh-my-zsh git plugin comes with many aliases:
 run ~alias~ to view all
 also handy to ~alias | grep rebase~
 
+**** git-absorb
+[[https://github.com/tummychow/git-absorb][git-absorb]] automatically creates fixup commits for local changes and assigns
+them to the commits they amend. It is useful for cleaning up a branch before
+review or merge.
+
+#+begin_src ruby :tangle ./Brewfile
+brew "git-absorb"
+#+end_src
+
 *** github
 **** SSH
 ***** authentication
