@@ -68,6 +68,7 @@ Handled below due to sequential nature of =tangling=.
 ** Alternative Inputs: voice, face, eyes, body
 *** voice
 - [[http://talonvoice.com][talon]]
+- [[https://handy.computer/][handy]]
 
 * Digital
 ** Chezmoi
