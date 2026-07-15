@@ -5,19 +5,19 @@ brew "fd"
 brew "ripgrep"
 brew "wget"
 
-tap "nikitabobko/tap"
+tap "nikitabobko/tap", trusted: { cask: "aerospace" }
 cask "nikitabobko/tap/aerospace"
 
 cask "mactex"
 
-tap "jimeh/emacs-builds"
+tap "jimeh/emacs-builds", trusted: { cask: "emacs-app" }
 cask "jimeh/emacs-builds/emacs-app"
 
 brew "difftastic"
 
 brew "tealdeer"
 
-tap "FelixKratz/formulae"
+tap "FelixKratz/formulae", trusted: { formula: "borders" }
 brew "FelixKratz/formulae/borders"
 
 cask "zed"
