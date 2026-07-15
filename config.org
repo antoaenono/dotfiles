@@ -2,8 +2,9 @@
 #+OPTIONS: num:t
 #+OPTIONS: toc:t
 #+OPTIONS: h:8
+#+PROPERTY: header-args :mkdirp yes
 
-* Welcome to Anton's dotfiles
+* Welcome to Anton's .dotfiles
 Welcome to this *org* document.
 It's a mix of writing and code... just some symbols...
 
@@ -65,8 +66,8 @@ Before installin' n-e-ting... check ya hands an' keys.
 Handled below due to sequential nature of =tangling=.
 
 ** Alternative Inputs: voice, face, eyes, body
+*** voice
 - [[http://talonvoice.com][talon]]
-- Aqua Voice
 
 * Digital
 ** Chezmoi
@@ -112,6 +113,20 @@ Notes on the Homebrew install:
 #+begin_src toml :tangle "./dot_config/chezmoi/chezmoi.toml"
 [scriptEnv]
     VAR_IN_SCRIPT = "a_value"
+#+end_src
+
+Repository-only files are excluded from the target home directory.
+#+begin_src conf :tangle "./.chezmoiignore"
+**/README.*
+config.org
+install.sh
+Brewfile
+AGENTS.md
+
+# Skip macOS-only scripts on non-macOS systems
+{{ if ne .chezmoi.os "darwin" }}
+.chezmoiscripts/darwin/**
+{{ end }}
 #+end_src
 
 ** macOS
@@ -583,6 +598,81 @@ export PATH="$HOME/.emacs.d/bin:$PATH"
 #+end_src
 
 ***** Configuration
+****** tangle-moi.el
+Portable Emacs implementation shared by the interactive command and agent
+launcher.
+#+begin_src emacs-lisp :tangle "./dot_config/doom/lisp/tangle-moi.el"
+;;; tangle-moi.el --- Tangle the literate dotfiles config -*- lexical-binding: t; -*-
+
+(require 'ob-tangle)
+(require 'subr-x)
+
+(defun tangle-moi--source-directory ()
+  "Return the chezmoi source directory."
+  (file-name-as-directory
+   (string-trim (car (process-lines "chezmoi" "source-path")))))
+
+(defun tangle-moi--config-file ()
+  "Return the canonical config.org path."
+  (file-truename
+   (expand-file-name "config.org" (tangle-moi--source-directory))))
+
+(defun tangle-moi-tangle ()
+  "Tangle config.org while preserving any unsaved live Emacs buffer."
+  (let* ((source-directory (tangle-moi--source-directory))
+         (config-file (tangle-moi--config-file))
+         (existing-buffer (find-buffer-visiting config-file)))
+    (when (and existing-buffer (buffer-modified-p existing-buffer))
+      (user-error "Refusing to tangle: config.org has unsaved Emacs changes"))
+    (with-current-buffer (or existing-buffer (find-file-noselect config-file))
+      (unless (verify-visited-file-modtime (current-buffer))
+        (revert-buffer t t))
+      (let ((default-directory source-directory))
+        (save-restriction
+          (widen)
+          (org-babel-tangle))))))
+
+(defun tangle-moi-tangle-batch ()
+  "Tangle config.org and print the target files for batch callers."
+  (condition-case error-data
+      (progn
+        (prin1 (tangle-moi-tangle))
+        (terpri))
+    (error
+     (message "Tangle failed: %s" (error-message-string error-data))
+     (kill-emacs 1))))
+
+(defun tangle-moi--save-config-buffer ()
+  "Save config.org when it has unsaved changes in Emacs."
+  (when-let ((buffer (find-buffer-visiting (tangle-moi--config-file))))
+    (when (buffer-modified-p buffer)
+      (with-current-buffer buffer
+        (save-buffer)))))
+
+;;;###autoload
+(defun tangle-moi ()
+  "Tangle the literate dotfiles config, preview it, and ask to apply."
+  (interactive)
+  (tangle-moi--save-config-buffer)
+  (message "Tangling Org file...")
+  (tangle-moi-tangle)
+  (message "Tangling complete. Previewing chezmoi changes...")
+  (let ((diff (shell-command-to-string
+               "chezmoi apply --dry-run --verbose --force")))
+    (if (string-empty-p diff)
+        (message "No changes to apply.")
+      (with-output-to-temp-buffer "*chezmoi diff*"
+        (princ diff))
+      (if (y-or-n-p "Apply these changes? ")
+          (if (zerop (shell-command "chezmoi apply --verbose"))
+              (message "Changes applied.")
+            (message "Chezmoi apply failed; see *Shell Command Output*."))
+        (message "Changes aborted.")))))
+
+(provide 'tangle-moi)
+;;; tangle-moi.el ends here
+#+end_src
+
 ****** config.el
 #+begin_src emacs-lisp :tangle "./dot_config/doom/config.el"
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
@@ -631,34 +721,7 @@ export PATH="$HOME/.emacs.d/bin:$PATH"
   projectile-ignored-projects '("~/source/archive/")
 )
 
-(defun tangle-moi ()
-  "Tangle the current Org buffer, show the chezmoi diff, and ask to apply."
-  (interactive)
-  (save-buffer)
-  (message "Ensuring tangle target directories exist...")
-  (let ((chezmoi-dir (expand-file-name "~/.local/share/chezmoi")))
-    (with-temp-buffer
-      (insert-file-contents (expand-file-name "config.org" chezmoi-dir))
-      (goto-char (point-min))
-      (while (re-search-forward ":tangle \"\\([^\"]+\\)\"" nil t)
-        (let* ((target (match-string 1))
-               (dir (file-name-directory
-                     (expand-file-name target chezmoi-dir))))
-          (make-directory dir t)))))
-  (message "Tangling Org file...")
-  (org-babel-tangle)
-  (message "Tangling complete. Running 'chezmoi apply -vn'...")
-  (let ((diff (shell-command-to-string "chezmoi apply -vn")))
-    (if (string-empty-p diff)
-        (message "No changes to apply.")
-      (with-output-to-temp-buffer "*chezmoi diff*"
-        (princ diff))
-      (if (y-or-n-p "Apply these changes? ")
-          (progn
-            (message "Applying changes...")
-            (shell-command "chezmoi apply -v")
-            (message "Changes applied."))
-        (message "Changes aborted.")))))
+(load! "lisp/tangle-moi")
 
 
 ;; 80 char limit encourages concise code. Respect to the early days.
@@ -1518,28 +1581,104 @@ matches:
     replace: "--dangerously-skip-permissions"
 #+end_src
 
-*** Agent
-AI coding agents: Claude Code (configured below, tangled to =~/.claude/=) and =omp= (oh-my-pi).
+*** Agents
+Cross-agent instructions, skills, and user-owned hooks live under =~/.agents/=.
+Product-specific directories contain only adapters and configuration that cannot
+be shared.
 
-**** Instructions
-Global agent instructions
-#+begin_src markdown :tangle "./dot_claude/CLAUDE.md"
+**** Repository Instructions
+#+begin_src markdown :tangle "./AGENTS.md"
+# Dotfiles Repository Guidance
+
+## Source of Truth
+
+- `config.org` is a literate configuration file and the authoritative source for configuration and documentation.
+- Do not edit tangled files directly. Instead, configuration code should be tangled from an Org code block.
+- Keep generated paths and their `:tangle` targets aligned.
+
+## Change workflow
+
+1. Concisely describe and write configuration code in Org code blocks in `config.org`.
+2. Follow the globally installed `$configure-dotfiles` skill to tangle, review, and apply the change.
+3. Review the generated diff, including file modes and templates.
+4. Run the relevant validation or dry-run before applying with `chezmoi apply`.
+
+## Safety
+
+- Preserve existing user changes and inspect unexpected diffs before overwriting anything.
+- Never place secrets, tokens, private keys, or machine-specific credentials in this repository.
+- Prefer small, reversible changes and document non-obvious platform assumptions.
+
+## Agent skill
+
+For dotfiles changes, follow `dot_agents/skills/configure-dotfiles/SKILL.md`.
+#+end_src
+
+**** Global Instructions
+The canonical global instructions merge the existing personal guidance used by
+different coding agents.
+#+begin_src markdown :tangle "./dot_agents/AGENTS.md"
+You are capable of excellent work; favor results that are correct, simple, coherent, and well validated.
+
+## Resolving Ambiguity & Clarifying Information
+
+- Ask follow-up questions before implementation when ambiguity affects correctness, scope, domain language, public contracts, data loss, irreversible changes, or durable architectural decisions.
+- For low-risk ambiguity, make a reasonable assumption, state it briefly, and proceed.
+- If the requested outcome conflicts with existing domain language or architecture, clarify the intended direction before changing code.
+
+## Anti-Sycophancy & Epistemic Stability
+
+- Be helpful without being agreeable by default. Do not validate a user's claim, premise, plan, or interpretation merely because they stated it confidently or repeatedly.
+- Reason independently from the user's stated preference. Treat confidence, repetition, social proof, authority, and urgency as signals to re-check evidence, not as reasons to agree.
+- Maintain a justified technical stance across turns unless new evidence, code, tests, documentation, or explicit requirements warrant changing it. If you change your view, state what changed and why.
+- When pressure or disagreement could be affecting the answer, briefly adopt a neutral reviewer stance: assess the claim as if reviewing a third party's technical argument, then answer in your normal assistant voice.
+- Detect false presuppositions and hidden assumptions in requests. Correct them directly before building on the request, especially when they affect correctness, safety, data loss, public contracts, or architecture.
+- For ethically risky, biased, unsafe, or discriminatory premises, identify the problematic assumption and redirect to a safer, accurate formulation instead of complying with the premise.
+- When the user challenges your answer, re-check the evidence and reasoning. If the original answer remains sound, say so plainly and offer the strongest actionable path forward.
+- Separate tone from truth: stay respectful, concise, and collaborative while preserving factual accuracy, engineering rigor, and safety.
+
 # Style
+
 Never use em dashes (—). Prefer commas, colons, semicolons, or regular dashes (-) instead.
 
 # Git
+
 ## Branching
+
 Prefer working on a branch rather than committing directly to main. Exception: personal/dotfiles repos where committing to main is acceptable.
 
 ## Committing
-Use the `/commit` skill for both splitting uncommitted changes across commits and rewriting existing commit history.
+
+Review status and diffs before committing. Create small, coherent commits and
+stage explicit paths. When changes clearly belong to existing unpushed commits,
+consider `git absorb` and inspect the autosquashed history. Never rewrite pushed
+history or force-push without explicit permission.
 
 ## Commits
+
 Never include "Co-Authored-By" lines in commits.
-Never include "Generated with Claude Code" in PR descriptions.
+Never include agent-generation attribution in commits or pull request descriptions.
 
 ## Pull request body template
+
 When creating or editing a PR, look for a `PULL_REQUEST_TEMPLATE.md` in `.github/` or the repo root and use it as the body structure. Fill in each section with real content. Reproduce all checklist items, checking off satisfied ones (`[x]`) and leaving the rest unchecked (`[ ]`). Never remove unchecked items or add sections not in the template.
+#+end_src
+
+#+begin_src fundamental :tangle "./dot_codex/symlink_AGENTS.md.tmpl"
+{{ .chezmoi.homeDir }}/.agents/AGENTS.md
+#+end_src
+
+#+begin_src fundamental :tangle "./dot_claude/symlink_CLAUDE.md.tmpl"
+{{ .chezmoi.homeDir }}/.agents/AGENTS.md
+#+end_src
+
+**** Hooks
+User-owned cross-agent hooks live in =~/.agents/hooks/=. Product configuration
+must point to scripts there. Externally managed hooks remain product-local so
+their installers can update them safely.
+
+#+begin_src fundamental :tangle "./dot_agents/hooks/.keep"
+User-owned cross-agent hooks live here.
 #+end_src
 
 **** omp (oh-my-pi)
@@ -1551,338 +1690,146 @@ export PATH="$HOME/.bun/bin:$PATH"
 #+end_src
 
 **** Skills
-Skills are Claude Code agent instructions tangled to =~/.claude/skills/=.
+Cross-agent skills are tangled to =~/.agents/skills/=. Product adapters point to
+the canonical skill directories.
+
+***** configure-dotfiles
+#+begin_src markdown :tangle "./dot_agents/skills/configure-dotfiles/SKILL.md"
+---
+name: configure-dotfiles
+description: Safely maintain personal dotfiles in the chezmoi-managed, Org-babel-tangled source repository. Use from any conversation or working directory to inspect, add, change, tangle, preview, or apply machine configuration.
+---
+
+# Configure Dotfiles
+
+## Model
+
+Run `chezmoi source-path` to locate the source repository. Use that directory as
+the working directory for the entire task.
+
+`config.org` is the source of truth. Files such as `dot_config/**`, `Brewfile`, and
+`.chezmoiscripts/**` are tangled outputs. Keep prose and code together in the Org
+document. Never edit a tangled output directly.
+
+## Workflow
+
+1. Inspect `git status --short`, the relevant Org section, and its current tangle
+   target. Preserve unrelated user changes.
+2. Edit `config.org`, including nearby prose and the exact `:tangle` target. Add a
+   shebang when the target must be executable.
+3. Run `~/.agents/skills/configure-dotfiles/scripts/tangle.sh`. It uses a running
+   Emacs server when available and otherwise launches batch Emacs. Do not
+   reproduce the underlying Emacs invocation manually.
+4. Run `git diff --check`, `git status --short`, and `git diff`. Confirm every
+   generated change follows from the requested Org edits.
+5. Preview deployment with `chezmoi apply --dry-run --verbose --force`. Use
+   `--force` only with `--dry-run`; it reveals target drift without overwriting it.
+6. If implementation was requested and the preview contains only intended
+   changes, apply the narrowest affected target or directory with `chezmoi apply
+   --verbose <target>`.
+7. Verify installed targets and report source changes, applied targets, and
+   anything intentionally left unapplied.
+
+`M-x tangle-moi` is the interactive interface to the same tangle core installed
+at `~/.config/doom/lisp/tangle-moi.el`.
+
+## Stop conditions
+
+Stop if the tangle script reports unsaved changes in an Emacs buffer visiting
+`config.org`; preserve that buffer and ask the user to resolve it. Ask before
+applying when the preview would overwrite independently modified home files,
+delete targets, change permissions unexpectedly, execute package or setup
+scripts, or include changes outside the request. Do not apply when the user asked
+only for review or diagnosis.
+
+## Conventions
+
+- Use chezmoi naming conventions for destination paths (`dot_`, `private_`,
+  `symlink_`, and `.tmpl`).
+- Keep platform-specific scripts under `.chezmoiscripts/<os>/` and guard them
+  appropriately.
+- Keep secrets and host-specific credentials out of the repository.
+- Prefer idempotent scripts with `set -e` and explicit paths.
+- Update nearby prose when behavior or setup instructions change.
+
+## Validation checklist
+
+- The Org source parses and tangles successfully.
+- The generated diff contains no unrelated changes.
+- Templates and scripts remain executable where intended.
+- The chezmoi dry-run reports only expected target changes.
+#+end_src
+
+#+begin_src shell :tangle "./dot_agents/skills/configure-dotfiles/scripts/executable_tangle.sh" :shebang "#!/bin/sh"
+set -eu
+
+elisp_file="${XDG_CONFIG_HOME:-$HOME/.config}/doom/lisp/tangle-moi.el"
+
+if [ ! -r "$elisp_file" ]; then
+  echo "Tangle failed: shared Emacs library not found at $elisp_file." >&2
+  exit 1
+fi
+
+if command -v emacsclient >/dev/null 2>&1 \
+    && emacsclient --eval t >/dev/null 2>&1; then
+  escaped_elisp_file=$(printf '%s' "$elisp_file" \
+    | sed 's/\\/\\\\/g; s/"/\\"/g')
+  exec emacsclient --eval \
+    "(progn (load \"$escaped_elisp_file\" nil t) (tangle-moi-tangle))"
+fi
+
+if ! command -v emacs >/dev/null 2>&1; then
+  echo "Tangle failed: Emacs is not installed or not on PATH." >&2
+  exit 127
+fi
+
+exec emacs --batch \
+  --load "$elisp_file" \
+  --funcall tangle-moi-tangle-batch
+#+end_src
+
+#+begin_src yaml :tangle "./dot_agents/skills/configure-dotfiles/agents/openai.yaml"
+interface:
+  display_name: "Configure Dotfiles"
+  short_description: "Safely edit, tangle, and apply personal dotfiles"
+  default_prompt: "Use $configure-dotfiles to update my literate dotfiles and safely apply the result."
+#+end_src
+
+#+begin_src fundamental :tangle "./dot_claude/skills/symlink_configure-dotfiles.tmpl"
+{{ .chezmoi.homeDir }}/.agents/skills/configure-dotfiles
+#+end_src
 
 ***** tangle-moi
-#+begin_src markdown :tangle "./dot_claude/skills/tangle-moi/SKILL.md"
+#+begin_src markdown :tangle "./dot_agents/skills/tangle-moi/SKILL.md"
 ---
 name: tangle-moi
-description: Tangle chezmoi config.org then dry-run and optionally apply via chezmoi
-user-invocable: true
-allowed-tools: Bash, AskUserQuestion
+description: Tangle the literate chezmoi config, preview the target diff, and optionally apply it. Use when explicitly invoking the agent equivalent of M-x tangle-moi.
 ---
 
 # Tangle Moi
 
-Mirrors the `M-x tangle-moi` Emacs command in the chezmoi dotfiles repo.
+Use this skill as the explicit manual shortcut for the `M-x tangle-moi`
+workflow.
 
-## Process
-
-### Step 1: Ensure tangle targets exist
-
-Run `~/.claude/skills/tangle-moi/ensure-dirs.sh`.
-
-### Step 2: Tangle
-
-Run `~/.claude/skills/tangle-moi/tangle.sh` and capture the list of tangled files and the count.
-
-### Step 3: Dry-run diff
-
-Run `chezmoi apply -vn 2>&1` and capture the output.
-
-If the output is empty, report "No changes to apply." and stop.
-
-### Step 4: Analyze the diff
-
-Write the structured analysis to a temp file: `$(mktemp /tmp/tangle-moi-analysis-XXXXXX.json)`
-
-Produce a structured analysis with these fields:
-
-- **Files changed**: count and names
-- **Lines**: +added / -removed
-- **Summary**: one sentence describing what changed
-- **Warnings**: list any concerns (or "none")
-- **Confidence**: HIGH / MEDIUM / LOW
-- **Proceed**: yes / ask
-
-Confidence and Proceed rules:
-
-- Confidence is HIGH when: all modified files were in the tangle output, no deletions, no permission changes, diff is small (under ~40 lines total)
-- Confidence is MEDIUM when: diff is larger but files all match tangle output, or diff is small but one unexpected file appears
-- Confidence is LOW when: files appear in the diff that were not in the tangle output, or deletions are present, or permission changes, or large unexpected diff
-
-Proceed is **yes** (auto-apply, no prompt) when confidence is HIGH.
-Proceed is **ask** when confidence is MEDIUM or LOW.
-
-Write the analysis as JSON to the temp file, e.g.:
-
-```json
-{
-  "files": [".config/doom/config.el"],
-  "lines": { "added": 1, "removed": 1 },
-  "summary": "Added #+DATE and #+PUBLISH keywords to org-roam capture template.",
-  "warnings": [],
-  "confidence": "HIGH",
-  "reason": "All changes match tangled files, small scope.",
-  "proceed": "yes"
-}
-```
-
-Then display a compact human-readable version of the analysis:
-
-```
-Files:      1 (.config/doom/config.el)
-Lines:      +1 / -1
-Summary:    Added #+DATE and #+PUBLISH keywords to org-roam capture template.
-Warnings:   none
-Confidence: HIGH — all changes match tangled files, small scope
-Proceed:    auto-applying
-```
-
-Then run `~/.claude/skills/tangle-moi/validate-analysis.sh <tmpfile>` to validate the JSON and read the proceed value. If the script exits non-zero, treat it as Proceed = ask and show the error as a warning.
-
-### Step 5: Confirm (only when Proceed = ask)
-
-Show the full diff output, then use AskUserQuestion to ask: "Apply these changes with `chezmoi apply -v`?"
-
-Options: "Yes, apply" / "No, abort"
-
-If Proceed = yes, skip this step entirely.
-
-### Step 6: Apply
-
-Run `chezmoi apply -v 2>&1` and report the output.
+Read `~/.agents/skills/configure-dotfiles/SKILL.md` and follow its workflow.
+Run `~/.agents/skills/tangle-moi/tangle.sh` for the tangle step, preview the
+chezmoi changes, and always ask before applying. Never auto-apply.
 #+end_src
 
-#+begin_src shell :tangle "./dot_claude/skills/tangle-moi/executable_ensure-dirs.sh" :shebang "#!/bin/sh"
-grep -oE ':tangle "([^"]+)"' ~/.local/share/chezmoi/config.org \
-  | sed 's/:tangle "//;s/"//' \
-  | xargs -I{} dirname ~/.local/share/chezmoi/{} \
-  | sort -u \
-  | xargs mkdir -p
+#+begin_src shell :tangle "./dot_agents/skills/tangle-moi/executable_tangle.sh" :shebang "#!/bin/sh"
+set -eu
+exec "$HOME/.agents/skills/configure-dotfiles/scripts/tangle.sh"
 #+end_src
 
-#+begin_src shell :tangle "./dot_claude/skills/tangle-moi/executable_tangle.sh" :shebang "#!/bin/sh"
-cd ~/.local/share/chezmoi && emacs --batch \
-  --eval "(require 'org)" \
-  --eval "(org-babel-tangle-file \"config.org\")"
+#+begin_src yaml :tangle "./dot_agents/skills/tangle-moi/agents/openai.yaml"
+interface:
+  display_name: "Tangle Moi"
+  short_description: "Tangle and preview the literate dotfiles config"
+  default_prompt: "Use $tangle-moi to tangle my literate dotfiles and preview the chezmoi changes."
 #+end_src
 
-#+begin_src shell :tangle "./dot_claude/skills/tangle-moi/executable_validate-analysis.sh" :shebang "#!/bin/sh"
-# Usage: validate-analysis.sh <path-to-analysis.json>
-# Validates the structured analysis JSON and prints the proceed value.
-# Exits 0 on success, 1 on validation failure.
-
-file="${1:-}"
-if [ -z "$file" ] || [ ! -f "$file" ]; then
-  echo "ERROR: file not found: $file" >&2
-  exit 1
-fi
-
-required_fields="files lines summary warnings confidence reason proceed"
-for field in $required_fields; do
-  if ! jq -e ".$field" "$file" > /dev/null 2>&1; then
-    echo "ERROR: missing required field: $field" >&2
-    exit 1
-  fi
-done
-
-confidence=$(jq -r '.confidence' "$file")
-case "$confidence" in
-  HIGH|MEDIUM|LOW) ;;
-  *) echo "ERROR: confidence must be HIGH, MEDIUM, or LOW (got: $confidence)" >&2; exit 1 ;;
-esac
-
-proceed=$(jq -r '.proceed' "$file")
-case "$proceed" in
-  yes|ask) ;;
-  *) echo "ERROR: proceed must be yes or ask (got: $proceed)" >&2; exit 1 ;;
-esac
-
-echo "proceed=$proceed"
-#+end_src
-
-***** commit
-Single entry point for all commit work: splitting uncommitted changes across multiple commits, and rewriting existing commit history.
-
-#+begin_src markdown :tangle "./dot_claude/skills/commit/SKILL.md"
----
-name: commit
-description: Split uncommitted changes across commits, or reorder/squash/amend existing commits
-user-invocable: true
-allowed-tools: Bash, AskUserQuestion, Read, Write
----
-
-# Commit
-
-Single entry point for all commit work.
-
-## Triage
-
-Run `git status --porcelain` and `git log --oneline main..HEAD` (try `master` if `main` fails).
-
-Use AskUserQuestion to ask what the user wants to do:
-- **Split** - uncommitted changes need to become multiple commits
-- **Reorder/Squash/Amend** - already-committed history needs reshaping
-
-Route to the appropriate section below.
-
----
-
-## Path A: Splitting uncommitted changes
-
-Changes are often logically coupled and need adjustments per commit to make sense in isolation.
-
-### Phase 1: Setup
-
-1. `~/.claude/skills/commit/snapshot.sh` - captures changed files, copies to temp dir, verifies checksums, prints temp dir path
-2. Record HEAD SHA: `git rev-parse HEAD`
-3. Write `<tmpdir>/plan.md` to disk with this schema:
-   ```yaml
-   head: <SHA>
-   commits:
-     - message: <commit message>
-       tracked: [<modified tracked files>]
-       untracked: [<new files>]
-       notes: <adjustments needed for this commit to make sense in isolation>
-   ```
-4. Present the full plan to the user via AskUserQuestion with plan contents as preview. Do not proceed until confirmed. If user requests changes, update `plan.md` on disk and re-confirm.
-5. `~/.claude/skills/commit/stash.sh <tmpdir> <tracked file> [<tracked file> ...]` - stashes tracked files, verifies stash created, then removes untracked originals
-6. `git status` - confirm working tree is clean before proceeding
-
-### Phase 2: Per-commit loop
-
-For each commit in the plan:
-1. Copy the relevant files from the temp dir into the working tree
-2. Edit each file to include only the changes for this commit; verify no changes intended for later commits were lost (temp dir is the source of truth)
-3. `git add <specific files>` - never use wildcards
-4. `git diff --cached` - verify exactly what will be committed
-5. Commit
-
-### Phase 3: Cleanup
-
-1. Compare `git rev-parse HEAD` to the recorded SHA - confirm expected commits were made
-2. `git diff HEAD` - verify nothing unexpected remains
-3. If clean: `git stash drop`, then delete the temp directory
-4. If something went wrong and HEAD has not moved: `~/.claude/skills/commit/restore.sh` to recover, then fix and start over
-5. If something went wrong after some commits were made: do NOT restore - ask the user how to proceed. Temp dir and stash are both available for recovery.
-
----
-
-## Path B: Rewriting commit history
-
-### Step 1: Determine range
-
-If the user specified N commits, use that. Otherwise run `git log --oneline main..HEAD` (try `master`). Count commits. If 0, report and stop.
-
-### Step 2: Show current order
-
-Run `git log --oneline HEAD~N..HEAD` and display oldest-first, numbered 1 through N.
-
-### Step 3: Ask what to do
-
-Use AskUserQuestion:
-- **Reorder** - change commit order
-- **Edit** - stop at a commit to amend it
-- **Squash/Fixup** - combine commits
-
-### Step 4: Collect instructions
-
-- **Reorder**: ask for new order by number (e.g. "3, 1, 2")
-- **Edit**: ask which commit number(s) to stop at
-- **Squash/Fixup**: ask which to squash into which (e.g. "squash 3 into 2")
-
-### Step 5: Build and execute the todo script
-
-```sh
-GIT_SEQUENCE_EDITOR='cat' git rebase -i HEAD~N 2>&1
-```
-
-Parse the `pick <hash> <message>` lines. Build the new todo, write to `.git/rebase-todo.sh`:
-
-```sh
-#!/bin/sh
-cat > "$1" <<'EOF'
-pick abc1234 first commit
-fixup def5678 second commit
-EOF
-```
-
-Execute:
-```sh
-chmod +x .git/rebase-todo.sh
-GIT_SEQUENCE_EDITOR=".git/rebase-todo.sh" git rebase -i HEAD~N
-rm .git/rebase-todo.sh
-```
-
-If conflicts: report to user, do NOT resolve automatically. Tell them to run `git rebase --abort` or resolve and `git rebase --continue`.
-
-### Step 6: Verify
-
-Show new commit order with `git log --oneline HEAD~N..HEAD` oldest-first.
-
----
-
-## Rules
-
-- Never pipe stdin to interactive git commands (`git add -p`, `git add -i`)
-- Never use wildcards with `git add`
-- Never force-push without explicit user permission
-- Always confirm with the user before stashing, deleting files, or any hard-to-reverse operation
-- If a rebase is already in progress (`.git/rebase-merge` exists), report it and stop
-#+end_src
-
-#+begin_src shell :tangle "./dot_claude/skills/commit/executable_snapshot.sh" :shebang "#!/bin/sh"
-# Snapshot all uncommitted changes to a temp directory.
-# Prints the temp dir path on stdout.
-# Usage: snapshot.sh
-set -e
-
-TMPDIR=$(mktemp -d /tmp/commit-snapshot-XXXXXX)
-
-# Get modified tracked files and new untracked files
-TRACKED=$(git diff --name-only)
-UNTRACKED=$(git ls-files --others --exclude-standard)
-
-for f in $TRACKED $UNTRACKED; do
-  mkdir -p "$TMPDIR/$(dirname "$f")"
-  cp "$f" "$TMPDIR/$f"
-done
-
-# Verify checksums
-for f in $TRACKED $UNTRACKED; do
-  ORIG=$(shasum "$f" | awk '{print $1}')
-  COPY=$(shasum "$TMPDIR/$f" | awk '{print $1}')
-  if [ "$ORIG" != "$COPY" ]; then
-    echo "ERROR: checksum mismatch for $f" >&2
-    exit 1
-  fi
-done
-
-echo "$TMPDIR"
-#+end_src
-
-#+begin_src shell :tangle "./dot_claude/skills/commit/executable_stash.sh" :shebang "#!/bin/sh"
-# Stash tracked files and remove untracked originals.
-# Usage: stash.sh <tmpdir> <tracked file> [<tracked file> ...]
-set -e
-
-TMPDIR="$1"
-shift
-TRACKED="$@"
-
-# Stash only the tracked files
-git stash push -- $TRACKED
-
-# Verify stash was created
-if ! git stash list | head -1 | grep -q "stash@{0}"; then
-  echo "ERROR: stash was not created" >&2
-  exit 1
-fi
-
-# Remove untracked originals (safe - already in tmpdir)
-UNTRACKED=$(git ls-files --others --exclude-standard)
-for f in $UNTRACKED; do
-  rm "$f"
-done
-#+end_src
-
-#+begin_src shell :tangle "./dot_claude/skills/commit/executable_restore.sh" :shebang "#!/bin/sh"
-# Restore working tree from stash. Use when something goes wrong
-# and no commits have been made yet.
-set -e
-git stash pop
-echo "Restored from stash."
+#+begin_src fundamental :tangle "./dot_claude/skills/symlink_tangle-moi.tmpl"
+{{ .chezmoi.homeDir }}/.agents/skills/tangle-moi
 #+end_src
 
 *** git

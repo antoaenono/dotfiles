@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tangle Moi"
+  short_description: "Tangle and preview the literate dotfiles config"
+  default_prompt: "Use $tangle-moi to tangle my literate dotfiles and preview the chezmoi changes."

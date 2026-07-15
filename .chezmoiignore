@@ -2,6 +2,7 @@
 config.org
 install.sh
 Brewfile
+AGENTS.md
 
 # Skip macOS-only scripts on non-macOS systems
 {{ if ne .chezmoi.os "darwin" }}

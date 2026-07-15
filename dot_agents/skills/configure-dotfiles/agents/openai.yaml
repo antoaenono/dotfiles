@@ -1,0 +1,4 @@
+interface:
+  display_name: "Configure Dotfiles"
+  short_description: "Safely edit, tangle, and apply personal dotfiles"
+  default_prompt: "Use $configure-dotfiles to update my literate dotfiles and safely apply the result."
