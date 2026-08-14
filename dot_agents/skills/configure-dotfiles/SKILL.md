@@ -25,11 +25,14 @@ document. Never edit a tangled output directly.
    reproduce the underlying Emacs invocation manually.
 4. Run `git diff --check`, `git status --short`, and `git diff`. Confirm every
    generated change follows from the requested Org edits.
-5. Preview deployment with `chezmoi apply --dry-run --verbose --force`. Use
-   `--force` only with `--dry-run`; it reveals target drift without overwriting it.
+5. Preview deployment with `chezmoi apply --dry-run --verbose --force`. On normal
+   command-line workflows, use `--force` only with `--dry-run`; it reveals target
+   drift without overwriting it.
 6. If implementation was requested and the preview contains only intended
    changes, apply the narrowest affected target or directory with `chezmoi apply
-   --verbose <target>`.
+   --verbose <target>`. The interactive `M-x tangle-moi` helper may use `--force`
+   for its real apply only after showing the full forced dry-run and receiving
+   explicit confirmation. This avoids a second prompt that requires a TTY.
 7. Verify installed targets and report source changes, applied targets, and
    anything intentionally left unapplied.
 

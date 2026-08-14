@@ -59,8 +59,10 @@
         (message "No changes to apply.")
       (with-output-to-temp-buffer "*chezmoi diff*"
         (princ diff))
-      (if (y-or-n-p "Apply these changes? ")
-          (if (zerop (shell-command "chezmoi apply --verbose"))
+      (if (y-or-n-p
+           "Apply these changes, overwriting any drifted targets? ")
+          (if (zerop
+               (shell-command "chezmoi apply --verbose --force"))
               (message "Changes applied.")
             (message "Chezmoi apply failed; see *Shell Command Output*."))
         (message "Changes aborted.")))))
