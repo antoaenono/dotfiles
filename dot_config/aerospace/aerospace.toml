@@ -204,5 +204,9 @@ automatically-unhide-macos-hidden-apps = true
   run = ['move-node-to-workspace T']
 
 [[on-window-detected]]
+  if.app-id = 'com.openai.codex'
+  run = ['move-node-to-workspace X']
+
+[[on-window-detected]]
   if.app-id = 'dev.zed.Zed'
   run = ['move-node-to-workspace Z']
