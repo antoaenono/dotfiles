@@ -17,6 +17,8 @@ brew "difftastic"
 
 brew "tealdeer"
 
+brew "mise"
+
 tap "FelixKratz/formulae", trusted: { formula: "borders" }
 brew "FelixKratz/formulae/borders"
 

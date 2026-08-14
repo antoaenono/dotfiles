@@ -1355,7 +1355,11 @@ auto_update_interval_hours = 720
 #+end_src
 
 *** mise
-Version manager for dev tools.
+Version manager for dev tools
+#+begin_src ruby :tangle ./Brewfile
+brew "mise"
+#+end_src
+
 #+begin_src shell :tangle "./dot_config/zsh/dot_zshrc"
 # mise
 eval "$(mise activate zsh)"
