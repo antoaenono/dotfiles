@@ -270,23 +270,38 @@
   (directory-files-recursively "~/org/" "\\.org$"))
 (setq org-agenda-files (my/org-agenda-files-recursive))
 
-(defun my/insert-blog-file-header ()
-  "Insert the standard header for a new blog post."
+(defun my/insert-site-file-header (publish-type)
+  "Insert a dated draft site header routed to PUBLISH-TYPE."
   (let ((title
          (capitalize
           (string-replace
            "-" " "
            (file-name-base buffer-file-name)))))
     (insert
-     (format "#+title: %s\n#+DATE: %s\n#+PUBLISH: blog\n\n"
+     (format "#+title: %s\n#+DATE: %s\n#+PUBLISH: %s\n#+DRAFT: true\n\n"
              title
-             (format-time-string "<%Y-%m-%d %a>")))))
+             (format-time-string "<%Y-%m-%d %a>")
+             publish-type))))
 
+;; Publishing is metadata-driven, so source location and site destination can
+;; vary independently. These rules provide the common directory defaults.
 (set-file-template!
  (concat "\\`"
          (regexp-quote (expand-file-name "~/org/blog/"))
          "[^/]+\\.org\\'")
- :trigger #'my/insert-blog-file-header)
+ :trigger (lambda () (my/insert-site-file-header "blog")))
+
+(set-file-template!
+ (concat "\\`"
+         (regexp-quote (expand-file-name "~/org/now/"))
+         "[^/]+\\.org\\'")
+ :trigger (lambda () (my/insert-site-file-header "now")))
+
+(set-file-template!
+ (concat "\\`"
+         (regexp-quote (expand-file-name "~/org/time/"))
+         ".+\\.org\\'")
+ :trigger (lambda () (my/insert-site-file-header "time")))
 
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
