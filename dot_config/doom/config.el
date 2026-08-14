@@ -270,6 +270,24 @@
   (directory-files-recursively "~/org/" "\\.org$"))
 (setq org-agenda-files (my/org-agenda-files-recursive))
 
+(defun my/insert-blog-file-header ()
+  "Insert the standard header for a new blog post."
+  (let ((title
+         (capitalize
+          (string-replace
+           "-" " "
+           (file-name-base buffer-file-name)))))
+    (insert
+     (format "#+title: %s\n#+DATE: %s\n#+PUBLISH: blog\n\n"
+             title
+             (format-time-string "<%Y-%m-%d %a>")))))
+
+(set-file-template!
+ (concat "\\`"
+         (regexp-quote (expand-file-name "~/org/blog/"))
+         "[^/]+\\.org\\'")
+ :trigger #'my/insert-blog-file-header)
+
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
 ;;
