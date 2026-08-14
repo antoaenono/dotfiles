@@ -1,0 +1,29 @@
+{
+  "description": "Protect the human-authored prose in the literate dotfiles configuration.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 \"$HOME/.agents/hooks/protect_literate_config.py\"",
+            "timeout": 10,
+            "statusMessage": "Snapshotting literate configuration prose"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 \"$HOME/.agents/hooks/protect_literate_config.py\"",
+            "timeout": 10,
+            "statusMessage": "Checking literate configuration prose"
+          }
+        ]
+      }
+    ]
+  }
+}

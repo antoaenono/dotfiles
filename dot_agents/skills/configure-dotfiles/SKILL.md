@@ -18,8 +18,10 @@ document. Never edit a tangled output directly.
 
 1. Inspect `git status --short`, the relevant Org section, and its current tangle
    target. Preserve unrelated user changes.
-2. Edit `config.org`, including nearby prose and the exact `:tangle` target. Add a
-   shebang when the target must be executable.
+2. Edit only Org source blocks in `config.org`, including the exact `:tangle`
+   target. New blocks may be added under an existing human-authored section. Ask
+   the user to make any required prose or heading changes. Add a shebang when the
+   target must be executable.
 3. Run `~/.agents/skills/configure-dotfiles/scripts/tangle.sh`. It uses a running
    Emacs server when available and otherwise launches batch Emacs. Do not
    reproduce the underlying Emacs invocation manually.
@@ -56,7 +58,7 @@ only for review or diagnosis.
   appropriately.
 - Keep secrets and host-specific credentials out of the repository.
 - Prefer idempotent scripts with `set -e` and explicit paths.
-- Update nearby prose when behavior or setup instructions change.
+- Flag nearby prose that needs a human update; do not edit it.
 
 ## Validation checklist
 
