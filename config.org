@@ -139,7 +139,7 @@ This script runs =brew bundle= whenever the =Brewfile= content changes.
 #+begin_src shell :tangle "./.chezmoiscripts/darwin/run_onchange_before_01-install-packages.sh.tmpl" :shebang "#!/bin/bash"
 set -e
 # Brewfile hash: {{ include "Brewfile" | sha256sum }}
-brew bundle --file="{{ joinPath .chezmoi.sourceDir "Brewfile" }}"
+brew bundle --no-upgrade --file="{{ joinPath .chezmoi.sourceDir "Brewfile" }}"
 #+end_src
 
 *** Shell (Zsh)
