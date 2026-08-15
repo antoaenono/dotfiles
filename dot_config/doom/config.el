@@ -103,17 +103,6 @@
       (1 '(face (:weight 'semi-bold
                            :box '(:line-width 2 :color "palegoldenrod"))))))))
 
-;; Doom reveals the saved Org position after opening a file. With overlay-based
-;; folding, that visibility override can survive global cycling and prevent TAB
-;; from revealing a nested subtree. Keep save-place, but skip Doom's reveal.
-(after! org
-  (add-hook 'org-mode-hook
-    (defun my/org-disable-doom-save-place-reveal ()
-      (remove-hook 'save-place-after-find-file-hook
-                   #'+org-make-last-point-visible-h
-                   t))
-    90))
-
 ;; automatically show magic behind point
 (use-package! org-appear
   :after org
