@@ -264,7 +264,7 @@ start-at-login = true
 
 # https://github.com/FelixKratz/JankyBorders
 after-startup-command = [
-  'exec-and-forget borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=7.0'
+  'exec-and-forget borders active_color=0xff7dcfff inactive_color=0xff494d64 width=10.0'
 ]
 #+end_src
 #+begin_src shell :tangle "./.chezmoiscripts/darwin/run_onchange_after_05-configure-aerospace-ui.sh" :shebang "#!/bin/bash"
@@ -321,10 +321,10 @@ Gaps
     inner.horizontal = 2
     inner.vertical =   0
 
-    outer.left =       0
-    outer.bottom =     2
-    outer.top =        2
-    outer.right =      0
+    outer.left =       5
+    outer.bottom =     5
+    outer.top =        5
+    outer.right =      5
 #+end_src
 
 **** Key Bindings
