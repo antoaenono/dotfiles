@@ -1427,14 +1427,33 @@ Settings
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "agent_servers": {
+    "codex-acp": {
+      "default_config_options": {
+        "reasoning_effort": "low"
+      },
+      "type": "registry"
+    }
+  },
   "indent_guides": {
     "line_width": 1
   },
   "edit_predictions": {
+    "allow_data_collection": "default",
     "mode": "subtle",
     "provider": "zed"
   },
   "context_servers": {
+    "mcp-server-github": {
+      "enabled": false,
+      "remote": false,
+      "settings": {}
+    },
+    "kagimcp": {
+      "enabled": false,
+      "remote": false,
+      "settings": {}
+    },
     "mcp-server-context7": {
       "enabled": false,
       "settings": {}
@@ -1442,16 +1461,21 @@ Settings
   },
   "soft_wrap": "editor_width",
   "agent": {
+    "sandbox_permissions": {
+      "allow_fs_write_all": true
+    },
+    "single_file_review": true,
+    "show_turn_stats": true,
     "tool_permissions": {
       "default": "allow"
     },
     "play_sound_when_agent_done": "never",
     "default_profile": "write",
     "default_model": {
-      "effort": "medium",
+      "effort": "low",
       "enable_thinking": true,
-      "provider": "google",
-      "model": "gemini-3.5-flash"
+      "provider": "openai-subscribed",
+      "model": "gpt-5.6-sol"
     },
     "model_parameters": []
   },
