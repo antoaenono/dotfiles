@@ -84,7 +84,19 @@ Handled below due to sequential nature of =tangling=.
 
 ** Alternative Inputs: voice, face, eyes, body
 *** voice
+**** Talon
 - [[http://talonvoice.com][talon]]
+#+begin_src conf :tangle "./dot_talon/user/personal/macos.talon"
+os: mac
+-
+hello talon: "hello world"
+select all: key(cmd-a)
+copy that: key(cmd-c)
+paste that: key(cmd-v)
+undo that: key(cmd-z)
+redo that: key(cmd-shift-z)
+#+end_src
+**** handy
 - [[https://handy.computer/][handy]]
 
 * Digital
