@@ -5,19 +5,23 @@
 #+PROPERTY: header-args :mkdirp yes
 
 * Welcome to Anton's .dotfiles
+
 Welcome to this *org* document.
-It's a mix of writing and code... just some symbols...
+It's mixto writing and code... just some symbols...
 
-It's written in the _literate_ style [Donald Knuth].
-This "literate dotfile .org document" is the "single source of truth" for configuratin' me macheens.
-Every time I change something... it is /described/ here *first*.
-Then, the code is /tangled/.
+It is written in a style known as _literate_ style [Donald Knuth].
 
-If yer readin' in a web browser, you'll see only de code. You're missing the magic links of =org=.
-Each code block you see is manually *linked* to a specific file.
-(a.k.a. =tangled= -> i.e. automatically exported, in order of occurrence, to a file)
-You gotta read it in =emacs= to see the magic of =org=.
+This /literate .dotfile ~Org~ document/ is
+the "single source of truth" for configuratin' me macheens.
+Every time I make a change... I give it an explanation here *first*.
+After that, then... the =code= is /tangled/.
 
+If yer readin' in a web browser, you'll see only de code.
+You're missing the magic links of =org=.
+
+Each code block you will see from Org mode is manually *linked* to a specific file.
+(a.k.a. =tangled= -> i.e. automatically inserted into a file)
+U gotta read it in =emacs= to see the magic of =org=.
 One of these lifetimes, emacs will find you.
 
 The /tangle/ of *code* /within/ these *writings*... it feels
@@ -25,12 +29,19 @@ The /tangle/ of *code* /within/ these *writings*... it feels
 
 : your code should tell a story
 
-* Workflow: How To Use This
+* Workflow: How To Use It
 ** Literate Programming
 Accepting the practice of writing a literate config means accepting a more complicated workflow.
 
-Since we are authoring a story alongside code as equals,
-we have to pick out all those code blocks n' put 'em in the right places.
+Since we are authoring a *story* /intertwined/ with *code*... as equals...
+we have to deliberately place the codes...
+
+This configuration uses literate programming.[fn:literate]
+
+Chezmoi manages the deployed files.[fn::The Org document remains the source of truth.]
+
+This applies to the source document.[fn:source]
+It also applies to generated configuration.[fn:source]
 
 ** Tangling
 Instead of editing our dotfiles directly, we must:
@@ -47,6 +58,10 @@ However, we'll write a script to help us with these *two* extra steps.
 Run the helper !!M-x tangle-moi!! to:
 1. *save* and *tangle*, then
 2. *~chezmoi apply~*
+
+
+* Config
+Below are different sections of the config.
 
 * Physical
 ** Direct Input: hands & keyboard
@@ -135,7 +150,7 @@ AGENTS.md
 
 ** macOS
 *** Homebrew Packages via Brewfile
-This script runs =brew bundle= whenever the =Brewfile= content changes.
+This script runs =brew bundle= whenever the =Brewfile= content changes.[fn:chezmoiscripts]
 
 #+begin_src shell :tangle "./.chezmoiscripts/darwin/run_onchange_before_01-install-packages.sh.tmpl" :shebang "#!/bin/bash"
 set -e
@@ -2409,5 +2424,6 @@ gpg-connect-agent reloadagent /bye
 Now when accessing =./authinfo.gpg=, dialog should appear for passphrase.
 
 * Footnotes
-
-[fn:1] https://www.chezmoi.io/reference/special-directories/chezmoiscripts/]
+[fn:chezmoiscripts] [[https://www.chezmoi.io/reference/special-directories/chezmoiscripts/][Chezmoi documentation for =.chezmoiscripts=]]
+[fn:literate] Donald Knuth introduced literate programming in 1984.
+[fn:source] Keep prose and code together in =config.org=.
