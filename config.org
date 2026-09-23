@@ -793,6 +793,11 @@ launcher.
 ;; ORG ;;
 (setopt org-directory "~/org/")
 
+;; Restore Org's native folded -> children -> subtree TAB cycle. Doom's
+;; evil-org integration otherwise replaces it with a two-state local toggle.
+(after! evil-org
+  (remove-hook 'org-tab-first-hook #'+org-cycle-only-current-subtree-h))
+
 ;; Disable org-element cache (Org 9.5+ bug): subtree and narrowed exports trigger
 ;; cache revalidation on the temp export buffer, causing an infinite loop / hang.
 ;; Full-document export is unaffected. Disabling the cache trades minor parse speed
