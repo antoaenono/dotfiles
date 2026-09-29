@@ -107,11 +107,11 @@ First, We need to:
 2. run =install.sh=
 
 Usage:
-#+begin_example
-git clone github.com/antoaenono/dotfiles.git ~/.local/share/chezmoi
+#+begin_src shell :eval never
+git clone https://github.com/antoaenono/dotfiles.git ~/.local/share/chezmoi
 cd ~/.local/share/chezmoi
 ./install.sh
-#+end_example
+#+end_src
 
 =install.sh= script:
 #+begin_src shell :tangle "./install.sh" :shebang "#!/bin/bash"
