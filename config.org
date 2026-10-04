@@ -1,6 +1,5 @@
 #+title: Literate Dotfile Configuration
-#+OPTIONS: num:t
-#+OPTIONS: toc:t
+#+OPTIONS: num:t toc:t \n:t
 #+OPTIONS: h:8
 #+PROPERTY: header-args :mkdirp yes
 
