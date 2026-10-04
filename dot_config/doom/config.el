@@ -72,30 +72,24 @@
 ;; TODO this didnt work emacs still can't find hlint
 (setq exec-path (cons (expand-file-name "~/.local/bin") exec-path))
 
-;; ORG ;;
-(setopt org-directory "~/org/")
-
-;; Restore Org's native folded -> children -> subtree TAB cycle. Doom's
-;; evil-org integration otherwise replaces it with a two-state local toggle.
-(after! evil-org
-  (remove-hook 'org-tab-first-hook #'+org-cycle-only-current-subtree-h))
-
 ;; Counted normal-state j/k match relative buffer-line numbers across folds.
 ;; Uncounted motions and operator/visual-state bindings retain Evil's defaults.
-(defcustom my/org-counted-motions-reveal nil
-  "Whether counted Org j/k reveal a destination inside folded text."
+(defcustom my/counted-motions-reveal nil
+  "Whether counted j/k reveal a destination inside folded text."
   :type 'boolean
-  :group 'org)
+  :group 'evil)
 
-(after! evil-org
-  (defun my/org-move-buffer-lines (count)
+(after! evil
+  (defun my/move-buffer-lines (count)
     "Move COUNT buffer lines, resolving hidden destinations without guessing."
     (let ((line-move-visual nil)
           (line-move-ignore-invisible nil))
       (evil-line-move count))
     (when (invisible-p (point))
-      (if my/org-counted-motions-reveal
-          (org-fold-reveal)
+      (if my/counted-motions-reveal
+          (cond ((derived-mode-p 'org-mode) (org-fold-reveal))
+                ((derived-mode-p 'markdown-mode) (markdown-show-entry))
+                (t (+fold/open)))
         ;; Leave folds closed and stop at the boundary in the motion direction.
         (while (and (invisible-p (point))
                     (if (> count 0) (not (eobp)) (not (bobp))))
@@ -109,23 +103,30 @@
           (forward-char 1))))
     (evil-adjust-cursor))
 
-  (evil-define-motion my/org-next-line (count)
-    "Move by buffer lines with COUNT, or visible logical lines without it."
+  (evil-define-motion my/next-line (count)
+    "Move by buffer lines with COUNT and relative numbers, otherwise normally."
     :type line
-    (if count
-        (my/org-move-buffer-lines count)
-      (evil-next-line 1)))
+    (if (and count (eq display-line-numbers 'relative))
+        (my/move-buffer-lines count)
+      (evil-next-line count)))
 
-  (evil-define-motion my/org-previous-line (count)
-    "Move up by buffer lines with COUNT, or visible logical lines without it."
+  (evil-define-motion my/previous-line (count)
+    "Move up by buffer lines with COUNT and relative numbers, otherwise normally."
     :type line
-    (if count
-        (my/org-move-buffer-lines (- count))
-      (evil-previous-line 1)))
+    (if (and count (eq display-line-numbers 'relative))
+        (my/move-buffer-lines (- count))
+      (evil-previous-line count)))
 
-  (evil-define-key 'normal org-mode-map
-    "j" #'my/org-next-line
-    "k" #'my/org-previous-line))
+  (define-key evil-normal-state-map "j" #'my/next-line)
+  (define-key evil-normal-state-map "k" #'my/previous-line))
+
+;; ORG ;;
+(setopt org-directory "~/org/")
+
+;; Restore Org's native folded -> children -> subtree TAB cycle. Doom's
+;; evil-org integration otherwise replaces it with a two-state local toggle.
+(after! evil-org
+  (remove-hook 'org-tab-first-hook #'+org-cycle-only-current-subtree-h))
 
 ;; Disable org-element cache (Org 9.5+ bug): subtree and narrowed exports trigger
 ;; cache revalidation on the temp export buffer, causing an infinite loop / hang.
