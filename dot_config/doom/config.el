@@ -80,6 +80,53 @@
 (after! evil-org
   (remove-hook 'org-tab-first-hook #'+org-cycle-only-current-subtree-h))
 
+;; Counted normal-state j/k match relative buffer-line numbers across folds.
+;; Uncounted motions and operator/visual-state bindings retain Evil's defaults.
+(defcustom my/org-counted-motions-reveal nil
+  "Whether counted Org j/k reveal a destination inside folded text."
+  :type 'boolean
+  :group 'org)
+
+(after! evil-org
+  (defun my/org-move-buffer-lines (count)
+    "Move COUNT buffer lines, resolving hidden destinations without guessing."
+    (let ((line-move-visual nil)
+          (line-move-ignore-invisible nil))
+      (evil-line-move count))
+    (when (invisible-p (point))
+      (if my/org-counted-motions-reveal
+          (org-fold-reveal)
+        ;; Leave folds closed and stop at the boundary in the motion direction.
+        (while (and (invisible-p (point))
+                    (if (> count 0) (not (eobp)) (not (bobp))))
+          (goto-char
+           (if (> count 0)
+               (next-char-property-change (point) (point-max))
+             (max (point-min)
+                  (1- (previous-char-property-change (point) (point-min)))))))
+        ;; Org can leave a visible newline at the end of a hidden span.
+        (when (and (> count 0) (eolp) (not (eobp)))
+          (forward-char 1))))
+    (evil-adjust-cursor))
+
+  (evil-define-motion my/org-next-line (count)
+    "Move by buffer lines with COUNT, or visible logical lines without it."
+    :type line
+    (if count
+        (my/org-move-buffer-lines count)
+      (evil-next-line 1)))
+
+  (evil-define-motion my/org-previous-line (count)
+    "Move up by buffer lines with COUNT, or visible logical lines without it."
+    :type line
+    (if count
+        (my/org-move-buffer-lines (- count))
+      (evil-previous-line 1)))
+
+  (evil-define-key 'normal org-mode-map
+    "j" #'my/org-next-line
+    "k" #'my/org-previous-line))
+
 ;; Disable org-element cache (Org 9.5+ bug): subtree and narrowed exports trigger
 ;; cache revalidation on the temp export buffer, causing an infinite loop / hang.
 ;; Full-document export is unaffected. Disabling the cache trades minor parse speed
