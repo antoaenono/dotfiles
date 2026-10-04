@@ -84,6 +84,11 @@ Handled below due to sequential nature of =tangling=.
 ** Alternative Inputs: voice, face, eyes, body
 *** voice
 **** Talon
+
+https://talonvoice.com/docs/reference/talon.html
+https://talon.wiki
+https://github.com/talonhub/community
+
 - [[http://talonvoice.com][talon]]
 #+begin_src conf :tangle "./dot_talon/user/personal/macos.talon"
 os: mac
