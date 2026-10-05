@@ -294,7 +294,36 @@
   (org-link-set-parameters "ppl"
                            :follow #'org-contacts-link-open
                            :complete #'my/org-contact-short-complete
-                           :insert-description #'my/org-contact-description))
+                           :insert-description #'my/org-contact-description)
+
+  (require 'url-util)
+
+  (defun my/org-contact-social-url (property value)
+    "Resolve a GitHub or LinkedIn PROPERTY VALUE to its profile URL."
+    (when-let ((template (cdr (assoc-string
+                              property
+                              '(("GITHUB" . "https://github.com/%s")
+                                ("LINKEDIN" . "https://www.linkedin.com/in/%s/"))
+                              t))))
+      (let* ((value (string-trim value))
+             (handle (string-remove-prefix "@" value)))
+        (cond ((string-match-p "\\`https?://[^[:space:]]+\\'" value) value)
+              ((string-match-p "\\`[[:alnum:]][[:alnum:]._-]*\\'" handle)
+               (format template (url-hexify-string handle)))))))
+
+  (defun my/org-open-contact-social-property (&rest _)
+    "Open a GitHub or LinkedIn profile from the Org property at point."
+    (when (derived-mode-p 'org-mode)
+      (let ((property (org-element-context)))
+        (when (eq (org-element-type property) 'node-property)
+          (when-let ((url (my/org-contact-social-url
+                          (org-element-property :key property)
+                          (org-element-property :value property))))
+            (browse-url url)
+            t)))))
+
+  (add-hook 'org-open-at-point-functions #'my/org-open-contact-social-property)
+  (advice-add '+org/dwim-at-point :before-until #'my/org-open-contact-social-property))
 
 (defun my/org-insert-contact-link ()
   "Select a contact using org-contacts and insert its default label."
