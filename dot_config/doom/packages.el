@@ -11,6 +11,9 @@
 ;; org
 (package! org-appear)
 (package! org-transclusion)
+(package! org-contacts
+  :recipe (:host github :repo "emacsmirror/org-contacts")
+  :pin "7b93522b6f9d0f3343fd34e5fd1be2ce2f66b279")
 
 ;; citations and bibliography
 (package! citar)

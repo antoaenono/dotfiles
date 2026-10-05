@@ -986,6 +986,48 @@ launcher.
   :after org
   :hook (org-mode . org-glossary-mode))
 
+;; PEOPLE REFERENCES
+(use-package! org-contacts
+  :after org
+  :config
+  (setq org-contacts-files '("~/org/contacts.org")
+        org-contacts-matcher "contact"
+        org-contacts-tag "contact")
+  (add-to-list 'org-tags-exclude-from-inheritance "contact")
+
+  (defun my/org-contact-description (link _description)
+    "Default LINK's local description to its nickname or initials."
+    (let* ((name (org-link-unescape
+                  (replace-regexp-in-string "\\`\\(?:org-contact\\|ppl\\):" "" link)))
+           (contact (car (org-contacts-filter
+                          (concat "\\`" (regexp-quote name) "\\'"))))
+           (nickname (cdr (assoc-string "NICKNAME" (nth 2 contact)))))
+      (if (and nickname (not (string-empty-p (string-trim nickname))))
+          (string-trim nickname)
+        (mapconcat (lambda (word) (upcase (substring word 0 1)))
+                   (split-string name "[[:space:]-]+" t) ""))))
+
+  (org-link-set-parameters "org-contact"
+                           :insert-description #'my/org-contact-description)
+
+  (defun my/org-contact-short-complete (&optional arg)
+    "Complete a ppl: link using org-contacts."
+    (concat "ppl:" (string-remove-prefix "org-contact:"
+                                         (org-contacts-link-complete arg))))
+
+  (org-link-set-parameters "ppl"
+                           :follow #'org-contacts-link-open
+                           :complete #'my/org-contact-short-complete
+                           :insert-description #'my/org-contact-description))
+
+(defun my/org-insert-contact-link ()
+  "Select a contact using org-contacts and insert its default label."
+  (interactive)
+  (require 'org-contacts)
+  (org-insert-link nil (my/org-contact-short-complete)))
+
+(map! :leader :desc "Insert contact reference" "n P" #'my/org-insert-contact-link)
+
 ;; ORG HEADING FACES (levels 5-8 inherit outline-4/foreground by default)
 (custom-set-faces!
   '(org-level-5 :foreground "#f92672")  ; pink
@@ -1009,7 +1051,9 @@ launcher.
           ("n" "Note" entry (file+headline "~/org/inbox.org" "Notes")
            "* %?\n%U\n")
           ("r" "Reading Note" entry (file+headline "~/org/inbox.org" "Reading")
-           "* %^{Title}\n%U\n%?\n"))))
+           "* %^{Title}\n%U\n%?\n")
+          ("p" "Person" entry (file "~/org/contacts.org")
+           "* %^{Name} :contact:\n:PROPERTIES:\n:ID: %(org-id-new)\n:NICKNAME: %^{Nickname}\n:PRIVATE: true\n:END:\n%?\n"))))
 
 ;; REFILE
 (after! org
@@ -1350,6 +1394,9 @@ brew "difftastic"
 ;; org
 (package! org-appear)
 (package! org-transclusion)
+(package! org-contacts
+  :recipe (:host github :repo "emacsmirror/org-contacts")
+  :pin "7b93522b6f9d0f3343fd34e5fd1be2ce2f66b279")
 
 ;; citations and bibliography
 (package! citar)
