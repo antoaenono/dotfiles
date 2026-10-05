@@ -166,7 +166,9 @@ AGENTS.md
 
 ** macOS
 *** Homebrew Packages via Brewfile
-This script runs =brew bundle= whenever the =Brewfile= content changes.[fn:chezmoiscripts]
+This script embeds the =Brewfile= SHA-256 hash in a comment.
+This causes chezmoi to rerun =brew bundle= on the next =chezmoi apply=
+if the =Brewfile= content has changed.[fn:chezmoi-scripts-on-change]
 
 #+begin_src shell :tangle "./.chezmoiscripts/darwin/run_onchange_before_01-install-packages.sh.tmpl" :shebang "#!/bin/bash"
 set -e
@@ -2493,6 +2495,6 @@ gpg-connect-agent reloadagent /bye
 Now when accessing =./authinfo.gpg=, dialog should appear for passphrase.
 
 * Footnotes
-[fn:chezmoiscripts] [[https://www.chezmoi.io/reference/special-directories/chezmoiscripts/][Chezmoi documentation for =.chezmoiscripts=]]
+[fn:chezmoi-scripts-on-change] Chezmoi [[https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/#run-a-script-when-the-contents-of-another-file-changes][documentation for =.chezmoiscripts=]]
 [fn:literate] Donald Knuth introduced literate programming in 1984.
 [fn:source] Keep prose and code together in =config.org=.
