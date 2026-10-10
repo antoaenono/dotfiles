@@ -208,5 +208,9 @@ automatically-unhide-macos-hidden-apps = true
   run = ['move-node-to-workspace X']
 
 [[on-window-detected]]
+  if.app-id = 'local.codex.viewer'
+  run = ['move-node-to-workspace X']
+
+[[on-window-detected]]
   if.app-id = 'dev.zed.Zed'
   run = ['move-node-to-workspace Z']
