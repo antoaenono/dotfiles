@@ -30,6 +30,10 @@ cask "keycastr"
 brew "gnupg"
 brew "pinentry-mac"
 
+# Local screen/webcam recording and scripted video processing.
+cask "obs"
+brew "ffmpeg"
+
 cask "espanso"
 
 brew "git-absorb"

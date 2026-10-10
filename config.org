@@ -1756,6 +1756,10 @@ keybind = cmd+s>r=reload_config
 cask "keycastr"
 brew "gnupg"
 brew "pinentry-mac"
+
+# Local screen/webcam recording and scripted video processing.
+cask "obs"
+brew "ffmpeg"
 #+end_src
 
 *** Espanso
