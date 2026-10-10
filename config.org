@@ -1,4 +1,6 @@
 #+title: Literate Dotfile Configuration
+#+label: ~.dotfiles~
+#+description: How a computer is configured... literally(?)!
 #+OPTIONS: num:t toc:t \n:t
 #+OPTIONS: h:8
 #+PROPERTY: header-args :mkdirp yes
