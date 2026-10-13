@@ -1004,7 +1004,7 @@ launcher.
   (defun my/org-contact-description (link _description)
     "Default LINK's local description to its nickname or initials."
     (let* ((name (org-link-unescape
-                  (replace-regexp-in-string "\\`\\(?:org-contact\\|ppl\\):" "" link)))
+                  (replace-regexp-in-string "\\`\\(?:org-contact\\|who\\):" "" link)))
            (contact (car (org-contacts-filter
                           (concat "\\`" (regexp-quote name) "\\'"))))
            (nickname (cdr (assoc-string "NICKNAME" (nth 2 contact)))))
@@ -1017,11 +1017,11 @@ launcher.
                            :insert-description #'my/org-contact-description)
 
   (defun my/org-contact-short-complete (&optional arg)
-    "Complete a ppl: link using org-contacts."
-    (concat "ppl:" (string-remove-prefix "org-contact:"
+    "Complete a who: link using org-contacts."
+    (concat "who:" (string-remove-prefix "org-contact:"
                                          (org-contacts-link-complete arg))))
 
-  (org-link-set-parameters "ppl"
+  (org-link-set-parameters "who"
                            :follow #'org-contacts-link-open
                            :complete #'my/org-contact-short-complete
                            :insert-description #'my/org-contact-description)
