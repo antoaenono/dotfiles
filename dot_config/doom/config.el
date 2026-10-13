@@ -260,7 +260,9 @@
       org-glossary-global-terms '("~/org/glossary.org"))
 (use-package! org-glossary
   :after org
-  :hook (org-mode . org-glossary-mode))
+  :hook (org-mode . org-glossary-mode)
+  :config
+  (load! "lisp/org-glossary-export-fix"))
 
 ;; PEOPLE REFERENCES
 (use-package! org-contacts
