@@ -1,0 +1,4 @@
+interface:
+  display_name: "Citation Hunt"
+  short_description: "Find citations for the uncited claims in a section of text"
+  default_prompt: "Use $citation-hunt to find citations for the uncited claims in this section."

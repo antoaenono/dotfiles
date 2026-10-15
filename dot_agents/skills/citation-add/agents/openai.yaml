@@ -1,0 +1,4 @@
+interface:
+  display_name: "Citation Add"
+  short_description: "Add new PDFs in ~/org/pdfs to references.bib with verbatim abstracts"
+  default_prompt: "Use $citation-add to add the new PDFs in ~/org/pdfs to my bibliography."
