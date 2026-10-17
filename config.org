@@ -1633,6 +1633,12 @@ brew "mise"
 eval "$(mise activate zsh)"
 #+end_src
 
+#+begin_src toml :tangle "./dot_config/mise/conf.d/cloudflare.toml"
+[tools]
+node = "24.16.0"
+"npm:cf" = "1.0.0-beta.18"
+#+end_src
+
 *** Haskell
 #+begin_src shell :tangle "./dot_config/zsh/dot_zshrc"
 # haskell
