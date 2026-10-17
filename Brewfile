@@ -1,3 +1,5 @@
+brew "atuin"
+
 brew "starship"
 
 brew "coreutils"

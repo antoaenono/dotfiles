@@ -1,0 +1,7 @@
+# Search across terminals on this machine without automatic sync.
+filter_mode = "host"
+auto_sync = false
+
+# Let Homebrew handle updates and insert selections for editing.
+update_check = false
+enter_accept = false

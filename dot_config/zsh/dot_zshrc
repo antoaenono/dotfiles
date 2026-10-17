@@ -4,6 +4,15 @@ zstyle ':omz:update' mode reminder
 plugins=(git starship)
 source $ZSH/oh-my-zsh.sh
 
+# Keep Up/Down local while saving commands for future shells.
+unsetopt share_history
+setopt inc_append_history
+
+# Search all local shell sessions with Ctrl-R.
+if (( $+commands[atuin] )); then
+  eval "$(atuin init zsh --disable-up-arrow --disable-ai)"
+fi
+
 # Aliases
 source ~/.config/zsh/alias.zsh
 
