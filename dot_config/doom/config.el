@@ -406,6 +406,12 @@
 
 (set-file-template!
  (concat "\\`"
+         (regexp-quote (expand-file-name "~/org/works/"))
+         ".+\\.org\\'")
+ :trigger (lambda () (my/insert-site-file-header "works")))
+
+(set-file-template!
+ (concat "\\`"
          (regexp-quote (expand-file-name "~/org/now/"))
          "[^/]+\\.org\\'")
  :trigger (lambda () (my/insert-site-file-header "now")))
