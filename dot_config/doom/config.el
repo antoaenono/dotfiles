@@ -400,9 +400,9 @@
 ;; vary independently. These rules provide the common directory defaults.
 (set-file-template!
  (concat "\\`"
-         (regexp-quote (expand-file-name "~/org/blog/"))
-         "[^/]+\\.org\\'")
- :trigger (lambda () (my/insert-site-file-header "blog")))
+         (regexp-quote (expand-file-name "~/org/writing/"))
+         ".+\\.org\\'")
+ :trigger (lambda () (my/insert-site-file-header "writing")))
 
 (set-file-template!
  (concat "\\`"
