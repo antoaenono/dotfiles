@@ -18,6 +18,7 @@ import sys
 import os
 import subprocess
 import argparse
+import uuid
 from datetime import datetime
 
 ROAM_REFS_DIR = os.path.expanduser("~/org/roam/refs")
@@ -39,12 +40,14 @@ def main():
     date_str = datetime.now().strftime("%Y-%m-%d %a")
 
     content = f""":PROPERTIES:
+:ID: {uuid.uuid4()}
 :NOTER_DOCUMENT: {pdf_path}
 :ROAM_REFS: @{args.citekey}
 :END:
 #+title: {args.title}
 #+DATE: <{date_str}>
-#+PUBLISH: reading
+#+PUBLISH: garden
+#+DRAFT: true
 
 * Summary
 -
