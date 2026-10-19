@@ -1915,11 +1915,11 @@ backend: auto
 # trigger: abbreviation you type
 # replace: expanded text
 matches:
-  - trigger: ";hello"
-    replace: "Hello, how are you?"
-
-  - trigger: "--dang"
-    replace: "--dangerously-skip-permissions"
+# These are for discipline/tools/skills in my master cv.org
+  - trigger: "e-e"
+    replace: "electrical-engineering"
+  - trigger: "c-s"
+    replace: "computer-science"
 #+end_src
 
 *** Agents
