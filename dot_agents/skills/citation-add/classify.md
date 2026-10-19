@@ -55,3 +55,11 @@ New entries go at the bottom of the relevant doc-class section.
 - `gacitua2026adr`: bib-type=article but no strong journal signals on p.1; falls through to conference-paper
   (acceptable - range is still correct for abstract extraction)
 - `rosenman2023race-ethnicity-names`: Nature Scientific Data; fixed by nature\.com signal
+
+
+### book-chapter
+- The 2023 Bjork chapter from *In Their Own Words* is only 12 pages and was
+  incorrectly classified as a conference paper by the short-document fallback.
+  Its first page names the edited book and editors. Detect this cover before
+  the fallback; also honor explicit incollection/inbook bibliography types.
+- Checked 2026-10-19 against the chapter title page (printed pages 19-30).

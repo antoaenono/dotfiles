@@ -117,15 +117,31 @@ SOURCE_EXTENSIONS = {".pdf", ".epub"}
 BOOK_TYPES = {"book", "mvbook", "collection", "mvcollection", "inbook",
               "incollection", "bookinbook", "suppbook", "suppcollection",
               "reference", "mvreference", "inreference", "booklet"}
-PAPER_TYPES = {"article", "inproceedings", "conference"}
+PAPER_TYPES = {"article", "inproceedings", "conference", "unpublished"}
+THESIS_TYPES = {"phdthesis", "mastersthesis", "thesis"}
+REPORT_TYPES = {"techreport", "report"}
+WEB_TYPES = {"online", "www", "electronic"}
+PERIODICAL_TYPES = {"periodical", "suppperiodical"}
+MISC_SUBTYPES = {"preprint": "papers", "paper": "papers", "report": "reports",
+                 "magazine": "periodicals", "bookchapter": "books"}
 
 
-def category_for(entry_type):
+def category_for(entry_type, entry_subtype=None):
     kind = entry_type.lower()
     if kind in BOOK_TYPES:
         return "books"
     if kind in PAPER_TYPES:
         return "papers"
+    if kind in THESIS_TYPES:
+        return "theses"
+    if kind in REPORT_TYPES:
+        return "reports"
+    if kind in WEB_TYPES:
+        return "web"
+    if kind in PERIODICAL_TYPES:
+        return "periodicals"
+    if kind == "misc":
+        return MISC_SUBTYPES.get((entry_subtype or "").lower())
     return None
 
 

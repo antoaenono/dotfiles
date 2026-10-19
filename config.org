@@ -955,10 +955,14 @@ launcher.
 (defun my/citar-noter-document (citekey)
   "Resolve one attachment for CITEKEY, preferring PDF for Org Noter."
   (let* ((files (delete-dups (gethash citekey (citar-get-files citekey))))
-         (document (or (seq-find (lambda (file)
-                                   (string-equal (downcase (or (file-name-extension file) ""))
-                                                 "pdf"))
-                                 files)
+         (reading-files (seq-remove (lambda (file)
+                                      (string-match-p "/sources/originals/" file))
+                                    files))
+         (pdf-p (lambda (file)
+                  (string-equal (downcase (or (file-name-extension file) "")) "pdf")))
+         (document (or (seq-find pdf-p reading-files)
+                       (car reading-files)
+                       (seq-find pdf-p files)
                        (car files))))
     (if document (abbreviate-file-name document) "")))
 
@@ -2590,10 +2594,20 @@ Adds uncataloged PDF and EPUB files recursively from `~/org/sources/` to
 `~/org/bib/references.bib`. Process one source completely before moving to the next.
 
 The source root is an inbox. Place cataloged books, edited collections, and
-book chapters in `books/`, and journal/conference papers in `papers/`. Keep
-unmapped types, such as reports, theses, and web clips, at the root and flag
-them for review. The bibliography determines classification; filenames and
-PDF/EPUB extensions do not. `source_library.py` contains the shared type map.
+book chapters in `books/`; journal/conference papers and research manuscripts
+in `papers/`; theses/dissertations in `theses/`; technical/industry reports in
+`reports/`; saved web pages in `web/`; and complete magazine/journal issues in
+`periodicals/`. The root is for incoming or unresolved files.
+
+Use accurate bibliography types. For generic `@misc` entries, set a verified
+`entrysubtype` such as `preprint`, `report`, or `magazine` when the source's role
+is known. A preprint remains a preprint even though it shares `papers/` with
+published articles. `source_library.py` contains the shared type/subtype map.
+PDF/EPUB extensions do not determine classification.
+
+Retained scans in `originals/` are alternate attachments of the same work, not
+new bibliography entries. List both paths in that entry's semicolon-separated
+`file` field and preserve the organized reading copy as the primary attachment.
 
 Run `python3 ~/.agents/skills/citation-add/audit_sources.py` to check catalog
 coverage, attachment paths, and placement. Inbox items are reported separately
@@ -2806,7 +2820,7 @@ import sys
 sys.path.insert(0, str(Path.home() / '.agents/skills/citation-add'))
 from source_library import SOURCE_ROOT, category_for
 source = Path('<original-full-path>').expanduser()
-category = category_for('<bib-entry-type>')
+category = category_for('<bib-entry-type>', '<entrysubtype-or-empty>')
 directory = SOURCE_ROOT / category if category else SOURCE_ROOT
 directory.mkdir(parents=True, exist_ok=True)
 destination = directory / ('<citekey>' + source.suffix.lower())
@@ -3482,6 +3496,14 @@ New entries go at the bottom of the relevant doc-class section.
 - `gacitua2026adr`: bib-type=article but no strong journal signals on p.1; falls through to conference-paper
   (acceptable - range is still correct for abstract extraction)
 - `rosenman2023race-ethnicity-names`: Nature Scientific Data; fixed by nature\.com signal
+
+
+### book-chapter
+- The 2023 Bjork chapter from *In Their Own Words* is only 12 pages and was
+  incorrectly classified as a conference paper by the short-document fallback.
+  Its first page names the edited book and editors. Detect this cover before
+  the fallback; also honor explicit incollection/inbook bibliography types.
+- Checked 2026-10-19 against the chapter title page (printed pages 19-30).
 #+end_src
 
 #+begin_src python :tangle "./dot_agents/skills/citation-add/fetch_doi.py"
@@ -4055,7 +4077,7 @@ def classify(pdf_path, bib_type=None, hint=None, info=None):
     """
     Classify document into one of:
       journal-article, conference-paper, arxiv-preprint,
-      book, thesis, tech-report, unknown
+      book, book-chapter, thesis, tech-report, unknown
 
     Priority: bib-type arg > pdfinfo metadata signals > filename > p.1 text > page count
     """
@@ -4064,6 +4086,8 @@ def classify(pdf_path, bib_type=None, hint=None, info=None):
         t = bib_type.lower()
         if t == 'book':
             return 'book'
+        if t in ('incollection', 'inbook', 'bookinbook'):
+            return 'book-chapter'
         if t in ('mastersthesis', 'phdthesis'):
             return 'thesis'
         if t == 'techreport':
@@ -4101,6 +4125,10 @@ def classify(pdf_path, bib_type=None, hint=None, info=None):
     # inproceedings early return - safe now that arXiv has been checked
     if bib_type and bib_type.lower() == 'inproceedings':
         return 'conference-paper'
+
+    # Extracted chapters from this edited ebook carry its cover and editor list.
+    if 'in their own words' in text_lower and re.search(r'\beditors\b', text_lower):
+        return 'book-chapter'
 
     # Book signals - page count is the primary signal; text signals alone are
     # too noisy (ACM DL downloads embed "all rights reserved" in metadata)
@@ -4705,15 +4733,31 @@ SOURCE_EXTENSIONS = {".pdf", ".epub"}
 BOOK_TYPES = {"book", "mvbook", "collection", "mvcollection", "inbook",
               "incollection", "bookinbook", "suppbook", "suppcollection",
               "reference", "mvreference", "inreference", "booklet"}
-PAPER_TYPES = {"article", "inproceedings", "conference"}
+PAPER_TYPES = {"article", "inproceedings", "conference", "unpublished"}
+THESIS_TYPES = {"phdthesis", "mastersthesis", "thesis"}
+REPORT_TYPES = {"techreport", "report"}
+WEB_TYPES = {"online", "www", "electronic"}
+PERIODICAL_TYPES = {"periodical", "suppperiodical"}
+MISC_SUBTYPES = {"preprint": "papers", "paper": "papers", "report": "reports",
+                 "magazine": "periodicals", "bookchapter": "books"}
 
 
-def category_for(entry_type):
+def category_for(entry_type, entry_subtype=None):
     kind = entry_type.lower()
     if kind in BOOK_TYPES:
         return "books"
     if kind in PAPER_TYPES:
         return "papers"
+    if kind in THESIS_TYPES:
+        return "theses"
+    if kind in REPORT_TYPES:
+        return "reports"
+    if kind in WEB_TYPES:
+        return "web"
+    if kind in PERIODICAL_TYPES:
+        return "periodicals"
+    if kind == "misc":
+        return MISC_SUBTYPES.get((entry_subtype or "").lower())
     return None
 
 
@@ -4780,7 +4824,7 @@ def audit(root, bib):
         if len(matches) > 1:
             issues.append({"kind": "shared-attachment", "file": relative,
                            "citekeys": [entry.key for entry in matches]})
-        categories = {category_for(entry.etype) for entry in matches}
+        categories = {category_for(entry.etype, entry.get("entrysubtype")) for entry in matches}
         if len(categories) != 1:
             issues.append({"kind": "conflicting-types", "file": relative})
             continue
@@ -4789,6 +4833,10 @@ def audit(root, bib):
             issues.append({"kind": "needs-category", "file": relative,
                            "types": sorted({entry.etype for entry in matches}),
                            "citekeys": [entry.key for entry in matches]})
+        # Original source scans remain alongside the organized reading copy.
+        # They must still be cataloged, and missing originals fail below.
+        elif path.relative_to(root).parts[0] == "originals":
+            continue
         elif path.relative_to(root).parts[0] != expected:
             issues.append({"kind": "unfiled" if path.parent == root else "misplaced",
                            "file": relative, "expected": expected,
@@ -4960,10 +5008,37 @@ class SourcesTests(unittest.TestCase):
         self.bib.write_text('@book{b, file={papers/book.epub}}\n@article{missing, file={papers/absent.pdf}}\n@phdthesis{t, file={thesis.pdf}}\n')
         report = audit(self.sources, self.bib)
         kinds = {issue["kind"] for issue in report["issues"]}
-        self.assertEqual(kinds, {"misplaced", "uncataloged", "missing-attachment", "needs-category"})
+        self.assertEqual(kinds, {"misplaced", "uncataloged", "missing-attachment", "unfiled"})
         self.assertEqual(category_for("incollection"), "books")
         self.assertEqual(category_for("inproceedings"), "papers")
         self.assertIsNone(category_for("misc"))
+
+    def test_additional_collections_preserve_publication_distinctions(self):
+        for kind, subtype, folder in [
+            ("phdthesis", None, "theses"), ("mastersthesis", None, "theses"),
+            ("report", None, "reports"), ("techreport", None, "reports"),
+            ("online", None, "web"), ("periodical", None, "periodicals"),
+            ("unpublished", None, "papers"), ("misc", "preprint", "papers"),
+            ("misc", "report", "reports"), ("misc", "magazine", "periodicals"),
+            ("misc", "unknown", None),
+        ]:
+            with self.subTest(kind=kind, subtype=subtype):
+                self.assertEqual(category_for(kind, subtype), folder)
+        (self.sources / "periodicals").mkdir()
+        (self.sources / "periodicals/issue.pdf").touch()
+        self.bib.write_text('@misc{issue, entrysubtype={magazine}, file={periodicals/issue.pdf}}\n')
+        self.assertEqual(audit(self.sources, self.bib)["issues"], [])
+
+    def test_cataloged_originals_are_preserved_and_checked(self):
+        (self.sources / "books").mkdir()
+        (self.sources / "originals").mkdir()
+        (self.sources / "books/chapter.pdf").touch()
+        original = self.sources / "originals/chapter-2up.pdf"
+        original.touch()
+        self.bib.write_text('@incollection{chapter, file={books/chapter.pdf;originals/chapter-2up.pdf}}\n')
+        self.assertEqual(audit(self.sources, self.bib)["issues"], [])
+        original.unlink()
+        self.assertEqual([issue["kind"] for issue in audit(self.sources, self.bib)["issues"]], ["missing-attachment"])
 
     def test_cleanup_preserves_known_paths_and_does_not_overwrite(self):
         (self.sources / "books").mkdir()

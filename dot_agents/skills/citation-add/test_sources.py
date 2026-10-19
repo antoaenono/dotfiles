@@ -57,10 +57,37 @@ class SourcesTests(unittest.TestCase):
         self.bib.write_text('@book{b, file={papers/book.epub}}\n@article{missing, file={papers/absent.pdf}}\n@phdthesis{t, file={thesis.pdf}}\n')
         report = audit(self.sources, self.bib)
         kinds = {issue["kind"] for issue in report["issues"]}
-        self.assertEqual(kinds, {"misplaced", "uncataloged", "missing-attachment", "needs-category"})
+        self.assertEqual(kinds, {"misplaced", "uncataloged", "missing-attachment", "unfiled"})
         self.assertEqual(category_for("incollection"), "books")
         self.assertEqual(category_for("inproceedings"), "papers")
         self.assertIsNone(category_for("misc"))
+
+    def test_additional_collections_preserve_publication_distinctions(self):
+        for kind, subtype, folder in [
+            ("phdthesis", None, "theses"), ("mastersthesis", None, "theses"),
+            ("report", None, "reports"), ("techreport", None, "reports"),
+            ("online", None, "web"), ("periodical", None, "periodicals"),
+            ("unpublished", None, "papers"), ("misc", "preprint", "papers"),
+            ("misc", "report", "reports"), ("misc", "magazine", "periodicals"),
+            ("misc", "unknown", None),
+        ]:
+            with self.subTest(kind=kind, subtype=subtype):
+                self.assertEqual(category_for(kind, subtype), folder)
+        (self.sources / "periodicals").mkdir()
+        (self.sources / "periodicals/issue.pdf").touch()
+        self.bib.write_text('@misc{issue, entrysubtype={magazine}, file={periodicals/issue.pdf}}\n')
+        self.assertEqual(audit(self.sources, self.bib)["issues"], [])
+
+    def test_cataloged_originals_are_preserved_and_checked(self):
+        (self.sources / "books").mkdir()
+        (self.sources / "originals").mkdir()
+        (self.sources / "books/chapter.pdf").touch()
+        original = self.sources / "originals/chapter-2up.pdf"
+        original.touch()
+        self.bib.write_text('@incollection{chapter, file={books/chapter.pdf;originals/chapter-2up.pdf}}\n')
+        self.assertEqual(audit(self.sources, self.bib)["issues"], [])
+        original.unlink()
+        self.assertEqual([issue["kind"] for issue in audit(self.sources, self.bib)["issues"]], ["missing-attachment"])
 
     def test_cleanup_preserves_known_paths_and_does_not_overwrite(self):
         (self.sources / "books").mkdir()

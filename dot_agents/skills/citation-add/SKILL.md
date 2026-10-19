@@ -11,10 +11,20 @@ Adds uncataloged PDF and EPUB files recursively from `~/org/sources/` to
 `~/org/bib/references.bib`. Process one source completely before moving to the next.
 
 The source root is an inbox. Place cataloged books, edited collections, and
-book chapters in `books/`, and journal/conference papers in `papers/`. Keep
-unmapped types, such as reports, theses, and web clips, at the root and flag
-them for review. The bibliography determines classification; filenames and
-PDF/EPUB extensions do not. `source_library.py` contains the shared type map.
+book chapters in `books/`; journal/conference papers and research manuscripts
+in `papers/`; theses/dissertations in `theses/`; technical/industry reports in
+`reports/`; saved web pages in `web/`; and complete magazine/journal issues in
+`periodicals/`. The root is for incoming or unresolved files.
+
+Use accurate bibliography types. For generic `@misc` entries, set a verified
+`entrysubtype` such as `preprint`, `report`, or `magazine` when the source's role
+is known. A preprint remains a preprint even though it shares `papers/` with
+published articles. `source_library.py` contains the shared type/subtype map.
+PDF/EPUB extensions do not determine classification.
+
+Retained scans in `originals/` are alternate attachments of the same work, not
+new bibliography entries. List both paths in that entry's semicolon-separated
+`file` field and preserve the organized reading copy as the primary attachment.
 
 Run `python3 ~/.agents/skills/citation-add/audit_sources.py` to check catalog
 coverage, attachment paths, and placement. Inbox items are reported separately
@@ -227,7 +237,7 @@ import sys
 sys.path.insert(0, str(Path.home() / '.agents/skills/citation-add'))
 from source_library import SOURCE_ROOT, category_for
 source = Path('<original-full-path>').expanduser()
-category = category_for('<bib-entry-type>')
+category = category_for('<bib-entry-type>', '<entrysubtype-or-empty>')
 directory = SOURCE_ROOT / category if category else SOURCE_ROOT
 directory.mkdir(parents=True, exist_ok=True)
 destination = directory / ('<citekey>' + source.suffix.lower())

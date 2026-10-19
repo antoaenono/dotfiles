@@ -137,7 +137,7 @@ def classify(pdf_path, bib_type=None, hint=None, info=None):
     """
     Classify document into one of:
       journal-article, conference-paper, arxiv-preprint,
-      book, thesis, tech-report, unknown
+      book, book-chapter, thesis, tech-report, unknown
 
     Priority: bib-type arg > pdfinfo metadata signals > filename > p.1 text > page count
     """
@@ -146,6 +146,8 @@ def classify(pdf_path, bib_type=None, hint=None, info=None):
         t = bib_type.lower()
         if t == 'book':
             return 'book'
+        if t in ('incollection', 'inbook', 'bookinbook'):
+            return 'book-chapter'
         if t in ('mastersthesis', 'phdthesis'):
             return 'thesis'
         if t == 'techreport':
@@ -183,6 +185,10 @@ def classify(pdf_path, bib_type=None, hint=None, info=None):
     # inproceedings early return - safe now that arXiv has been checked
     if bib_type and bib_type.lower() == 'inproceedings':
         return 'conference-paper'
+
+    # Extracted chapters from this edited ebook carry its cover and editor list.
+    if 'in their own words' in text_lower and re.search(r'\beditors\b', text_lower):
+        return 'book-chapter'
 
     # Book signals - page count is the primary signal; text signals alone are
     # too noisy (ACM DL downloads embed "all rights reserved" in metadata)

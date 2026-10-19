@@ -23,7 +23,7 @@ def audit(root, bib):
         if len(matches) > 1:
             issues.append({"kind": "shared-attachment", "file": relative,
                            "citekeys": [entry.key for entry in matches]})
-        categories = {category_for(entry.etype) for entry in matches}
+        categories = {category_for(entry.etype, entry.get("entrysubtype")) for entry in matches}
         if len(categories) != 1:
             issues.append({"kind": "conflicting-types", "file": relative})
             continue
@@ -32,6 +32,10 @@ def audit(root, bib):
             issues.append({"kind": "needs-category", "file": relative,
                            "types": sorted({entry.etype for entry in matches}),
                            "citekeys": [entry.key for entry in matches]})
+        # Original source scans remain alongside the organized reading copy.
+        # They must still be cataloged, and missing originals fail below.
+        elif path.relative_to(root).parts[0] == "originals":
+            continue
         elif path.relative_to(root).parts[0] != expected:
             issues.append({"kind": "unfiled" if path.parent == root else "misplaced",
                            "file": relative, "expected": expected,

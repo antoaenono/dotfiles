@@ -204,10 +204,14 @@
 (defun my/citar-noter-document (citekey)
   "Resolve one attachment for CITEKEY, preferring PDF for Org Noter."
   (let* ((files (delete-dups (gethash citekey (citar-get-files citekey))))
-         (document (or (seq-find (lambda (file)
-                                   (string-equal (downcase (or (file-name-extension file) ""))
-                                                 "pdf"))
-                                 files)
+         (reading-files (seq-remove (lambda (file)
+                                      (string-match-p "/sources/originals/" file))
+                                    files))
+         (pdf-p (lambda (file)
+                  (string-equal (downcase (or (file-name-extension file) "")) "pdf")))
+         (document (or (seq-find pdf-p reading-files)
+                       (car reading-files)
+                       (seq-find pdf-p files)
                        (car files))))
     (if document (abbreviate-file-name document) "")))
 
