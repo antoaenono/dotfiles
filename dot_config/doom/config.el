@@ -191,7 +191,8 @@
 
 ;; CITATIONS (citar + org-cite)
 (setq! citar-bibliography '("~/org/bib/references.bib")
-       citar-library-paths '("~/org/pdfs/")
+       citar-library-paths '("~/org/sources/")
+       citar-library-paths-recursive t
        citar-notes-paths '("~/org/roam/refs/"))
 
 (after! oc
@@ -199,6 +200,16 @@
         org-cite-insert-processor 'citar
         org-cite-follow-processor 'citar
         org-cite-activate-processor 'citar))
+
+(defun my/citar-noter-document (citekey)
+  "Resolve one attachment for CITEKEY, preferring PDF for Org Noter."
+  (let* ((files (delete-dups (gethash citekey (citar-get-files citekey))))
+         (document (or (seq-find (lambda (file)
+                                   (string-equal (downcase (or (file-name-extension file) ""))
+                                                 "pdf"))
+                                 files)
+                       (car files))))
+    (if document (abbreviate-file-name document) "")))
 
 ;; bridge citar with org-roam for note management
 (use-package! citar-org-roam
@@ -217,7 +228,7 @@
   (add-to-list 'org-roam-capture-templates
                '("r" "reference" plain "%?"
                  :if-new (file+head "refs/${citar-citekey}.org"
-                                    ":PROPERTIES:\n:NOTER_DOCUMENT: ${citar-file}\n:END:\n#+title: ${citar-title}\n#+DATE: %<%Y-%m-%d %a>\n#+PUBLISH: garden\n#+DRAFT: true\n")
+                                    ":PROPERTIES:\n:NOTER_DOCUMENT: %(my/citar-noter-document \"${citar-citekey}\")\n:END:\n#+title: ${citar-title}\n#+DATE: %<%Y-%m-%d %a>\n#+PUBLISH: garden\n#+DRAFT: true\n")
                  :immediate-finish t
                  :unnarrowed t))
   (setq citar-org-roam-capture-template-key "r"))

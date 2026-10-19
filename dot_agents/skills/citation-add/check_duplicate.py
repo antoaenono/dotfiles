@@ -39,6 +39,7 @@ Exit codes:
 
 import sys
 import re
+import os
 import argparse
 
 
@@ -66,7 +67,8 @@ def load_bib(bib_path):
     """Parse bib into list of dicts with keys: citekey, doi, title, author, year, file."""
     entries = []
     try:
-        text = open(bib_path, encoding='utf-8').read()
+        with open(bib_path, encoding='utf-8') as stream:
+            text = stream.read()
     except FileNotFoundError:
         return entries
 
@@ -192,7 +194,7 @@ def main():
     parser.add_argument('--title', default='')
     parser.add_argument('--author', default='')
     parser.add_argument('--year', default='')
-    parser.add_argument('--new-pdf', default='')
+    parser.add_argument('--new-file', '--new-pdf', dest='new_pdf', default='')
     args = parser.parse_args()
 
     new_doi = normalize_doi(args.doi)
@@ -210,6 +212,11 @@ def main():
 
         # --- Case 1: exact DOI match (deterministic) ---
         if new_doi and e['doi'] and new_doi == e['doi']:
+            new_format = os.path.splitext(new_pdf)[1].lower()
+            existing_formats = {'.' + suffix.lower() for suffix in re.findall(r'\.(pdf|epub)(?=[;:\s]|$)', existing_file, re.I)}
+            if new_format in {'.pdf', '.epub'} and existing_formats and new_format not in existing_formats:
+                print(f"ADD_FORMAT: citekey={citekey} existing_file={existing_file} new_file={new_pdf} reason=Same DOI, additional source format")
+                return
             print(f"KEEP_EXISTING: citekey={citekey} existing_file={existing_file} "
                   f"reason=DOI match ({new_doi})")
             return

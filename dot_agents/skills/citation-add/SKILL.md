@@ -1,14 +1,24 @@
 ---
 name: citation-add
-description: Add new PDFs in ~/org/pdfs/ to references.bib. Cleans filenames, classifies, hits CrossRef for authoritative metadata, checks for duplicates, writes a validated bib entry, renames the PDF to the citekey, and runs biber. Zero verification debt - every entry is correct on arrival.
+description: Catalog PDF and EPUB sources in ~/org/sources with verified bibliography metadata, preserving abstracts and existing references.
 user-invocable: true
 allowed-tools: Bash, Read, Edit
 ---
 
 # citation-add
 
-Adds every untracked PDF in `~/org/pdfs/` to `~/org/bib/references.bib`.
-Process one PDF completely before moving to the next.
+Adds uncataloged PDF and EPUB files recursively from `~/org/sources/` to
+`~/org/bib/references.bib`. Process one source completely before moving to the next.
+
+The source root is an inbox. Place cataloged books, edited collections, and
+book chapters in `books/`, and journal/conference papers in `papers/`. Keep
+unmapped types, such as reports, theses, and web clips, at the root and flag
+them for review. The bibliography determines classification; filenames and
+PDF/EPUB extensions do not. `source_library.py` contains the shared type map.
+
+Run `python3 ~/.agents/skills/citation-add/audit_sources.py` to check catalog
+coverage, attachment paths, and placement. Inbox items are reported separately
+from broken paths or misplaced sources.
 Entry quality is baked in at add time - no separate verify pass needed.
 
 ---
@@ -21,24 +31,39 @@ Strip Anna's Archive suffixes:
 python3 ~/.agents/skills/citation-add/clean_filenames.py --apply
 ```
 
-Find untracked PDFs:
+Find uncataloged PDFs and EPUBs:
 
 ```bash
 python3 ~/.agents/skills/citation-add/find_missing.py
 ```
 
-- `MISSING:<csv>` - filenames to process (stop here if empty)
+- `MISSING:<csv>` - source-root-relative paths to process (stop here if empty)
 - `CITEKEYS:<csv>` - existing citekeys (keep for collision checks)
 
 ---
 
-## Step 2: For each missing PDF - one at a time
+## Step 2: For each missing source - one at a time
 
 ### 2a. Classify and extract
 
+For an EPUB, inspect the actual package metadata and spine text:
+
+```bash
+python3 ~/.agents/skills/citation-add/inspect_epub.py ~/org/sources/<file.epub> --text
+```
+
+Use the title, creators, publisher, date, and identifiers as evidence, then
+verify the correct entry type and edition. A publisher description is not an
+abstract. Never send EPUBs to `pdftotext`, `pdfinfo`, PDF OCR, or bbox helpers.
+Use its metadata and text for the fallback workflow, omitting `abstract` unless
+the work explicitly supplies one. Org Noter EPUB annotation requires nov.el;
+cataloging and source inspection do not require that reader.
+
+For a PDF, keep the existing extraction workflow:
+
 ```bash
 python3 ~/.agents/skills/citation-add/classify_pdf.py \
-  --pdf ~/org/pdfs/<filename> \
+  --pdf ~/org/sources/<filename> \
   --task extract:bib
 ```
 
@@ -68,12 +93,17 @@ python3 ~/.agents/skills/citation-add/check_duplicate.py \
   --title "<title-or-empty>" \
   --author "<author-or-empty>" \
   --year "<year-or-empty>" \
-  --new-pdf "<filename>"
+  --new-file "<filename>"
 ```
 
 Interpret the output token:
 
 - `NO_MATCH` - no duplicate found, proceed to Step 3
+- `ADD_FORMAT` - the DOI identifies the same work in another format. Preserve
+  both files and associate both paths with the existing entry using a
+  semicolon-separated `file` field. Do not create a duplicate entry or delete
+  either format. For inferred matches across PDF/EPUB formats, first verify
+  the work and edition, then follow this same multiple-attachment policy.
 - `KEEP_EXISTING: citekey=... existing_file=... reason=...`
   - Delete the new PDF silently, log the decision in the Step 8 report
   - Do NOT add a new bib entry
@@ -82,7 +112,7 @@ Interpret the output token:
   - Delete the old PDF file, log the decision
   - Do NOT add a new bib entry
 - `INFER: citekey=... existing_file=... new_pdf=... hint=...`
-  - Read pages 1-2 of both PDFs using nav.py or Read
+  - Read the opening pages or EPUB sections of both sources
   - Reason about whether they are the same work, using the `hint` as guidance
   - Resolve as KEEP_EXISTING, KEEP_NEW, or escalate to ASK if still unclear
   - If resolved, log the decision; if escalating, show the user the evidence
@@ -119,7 +149,7 @@ Format following `~/.agents/skills/citation-add/examples.md`:
 - `publisher = {IEEE}` / `publisher = {ACM}` valid for `@inproceedings`
 - `abstract`: follow **Abstract** below
 
-Add `file = {~/org/pdfs/<filename>}` (temporary - will be updated after rename).
+Add `file = {~/org/sources/<filename>}` (temporary - will be updated after rename).
 
 ---
 
@@ -156,7 +186,7 @@ Take the first source that has it:
 3. The PDF:
 
    ```bash
-   python3 ~/.agents/skills/citation-add/extract_abstract.py ~/org/pdfs/<filename>
+   python3 ~/.agents/skills/citation-add/extract_abstract.py ~/org/sources/<filename>
    ```
 
    - `ABSTRACT:<text>` - use it, after the check below
@@ -184,22 +214,32 @@ magazine article with no printed abstract, the publisher's registered abstract
 
 ---
 
-## Step 4: Write entry and rename PDF
+## Step 4: Write entry and organize the source
 
 Append the completed entry to the bib.
 
-Rename the PDF to `{citekey}.pdf`:
+Keep the original file format and name it `{citekey}.pdf` or `{citekey}.epub`.
+Use the shared type map to choose its folder; unmapped types stay in the inbox.
 
 ```python
-# Always use Python for renames - shell mv fails on non-ASCII and special chars
-import os
-pdfs = os.path.expanduser('~/org/pdfs')
-files = os.listdir(pdfs)
-src = [f for f in files if f == '<original-filename>'][0]
-os.rename(os.path.join(pdfs, src), os.path.join(pdfs, '<citekey>.pdf'))
+from pathlib import Path
+import sys
+sys.path.insert(0, str(Path.home() / '.agents/skills/citation-add'))
+from source_library import SOURCE_ROOT, category_for
+source = Path('<original-full-path>').expanduser()
+category = category_for('<bib-entry-type>')
+directory = SOURCE_ROOT / category if category else SOURCE_ROOT
+directory.mkdir(parents=True, exist_ok=True)
+destination = directory / ('<citekey>' + source.suffix.lower())
+if destination != source:
+    if destination.exists():
+        raise FileExistsError(destination)
+    source.rename(destination)
+print(destination)
 ```
 
-Update the `file` field in the just-written entry to `{~/org/pdfs/<citekey>.pdf}`.
+Update only the attachment being added in the entry's `file` field to this
+actual destination. Preserve other attachments. Run the source audit again.
 
 ---
 

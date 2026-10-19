@@ -4,7 +4,7 @@ Create a new org-roam ref file for a citekey, matching the citar-org-roam
 capture template defined in doom config.
 
 Usage:
-    python3 create_ref.py --citekey KEY --title TITLE --pdf ~/org/pdfs/file.pdf
+    python3 create_ref.py --citekey KEY --title TITLE --file ~/org/sources/<file.pdf-or.epub>
 
 Output:
     CREATED:<path>   - file was created
@@ -27,7 +27,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--citekey", required=True)
     parser.add_argument("--title", required=True)
-    parser.add_argument("--pdf", required=True)
+    parser.add_argument("--file", "--pdf", dest="source", required=True, help="Local reference attachment, including PDF or EPUB")
     args = parser.parse_args()
 
     out_path = os.path.join(ROAM_REFS_DIR, f"{args.citekey}.org")
@@ -36,7 +36,7 @@ def main():
         print(f"EXISTS:{out_path}")
         return
 
-    pdf_path = os.path.expanduser(args.pdf)
+    pdf_path = os.path.expanduser(args.source)
     date_str = datetime.now().strftime("%Y-%m-%d %a")
 
     content = f""":PROPERTIES:

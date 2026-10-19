@@ -942,7 +942,8 @@ launcher.
 
 ;; CITATIONS (citar + org-cite)
 (setq! citar-bibliography '("~/org/bib/references.bib")
-       citar-library-paths '("~/org/pdfs/")
+       citar-library-paths '("~/org/sources/")
+       citar-library-paths-recursive t
        citar-notes-paths '("~/org/roam/refs/"))
 
 (after! oc
@@ -950,6 +951,16 @@ launcher.
         org-cite-insert-processor 'citar
         org-cite-follow-processor 'citar
         org-cite-activate-processor 'citar))
+
+(defun my/citar-noter-document (citekey)
+  "Resolve one attachment for CITEKEY, preferring PDF for Org Noter."
+  (let* ((files (delete-dups (gethash citekey (citar-get-files citekey))))
+         (document (or (seq-find (lambda (file)
+                                   (string-equal (downcase (or (file-name-extension file) ""))
+                                                 "pdf"))
+                                 files)
+                       (car files))))
+    (if document (abbreviate-file-name document) "")))
 
 ;; bridge citar with org-roam for note management
 (use-package! citar-org-roam
@@ -968,7 +979,7 @@ launcher.
   (add-to-list 'org-roam-capture-templates
                '("r" "reference" plain "%?"
                  :if-new (file+head "refs/${citar-citekey}.org"
-                                    ":PROPERTIES:\n:NOTER_DOCUMENT: ${citar-file}\n:END:\n#+title: ${citar-title}\n#+DATE: %<%Y-%m-%d %a>\n#+PUBLISH: garden\n#+DRAFT: true\n")
+                                    ":PROPERTIES:\n:NOTER_DOCUMENT: %(my/citar-noter-document \"${citar-citekey}\")\n:END:\n#+title: ${citar-title}\n#+DATE: %<%Y-%m-%d %a>\n#+PUBLISH: garden\n#+DRAFT: true\n")
                  :immediate-finish t
                  :unnarrowed t))
   (setq citar-org-roam-capture-template-key "r"))
@@ -2568,15 +2579,25 @@ interface:
 #+begin_src markdown :tangle "./dot_agents/skills/citation-add/SKILL.md"
 ---
 name: citation-add
-description: Add new PDFs in ~/org/pdfs/ to references.bib. Cleans filenames, classifies, hits CrossRef for authoritative metadata, checks for duplicates, writes a validated bib entry, renames the PDF to the citekey, and runs biber. Zero verification debt - every entry is correct on arrival.
+description: Catalog PDF and EPUB sources in ~/org/sources with verified bibliography metadata, preserving abstracts and existing references.
 user-invocable: true
 allowed-tools: Bash, Read, Edit
 ---
 
 # citation-add
 
-Adds every untracked PDF in `~/org/pdfs/` to `~/org/bib/references.bib`.
-Process one PDF completely before moving to the next.
+Adds uncataloged PDF and EPUB files recursively from `~/org/sources/` to
+`~/org/bib/references.bib`. Process one source completely before moving to the next.
+
+The source root is an inbox. Place cataloged books, edited collections, and
+book chapters in `books/`, and journal/conference papers in `papers/`. Keep
+unmapped types, such as reports, theses, and web clips, at the root and flag
+them for review. The bibliography determines classification; filenames and
+PDF/EPUB extensions do not. `source_library.py` contains the shared type map.
+
+Run `python3 ~/.agents/skills/citation-add/audit_sources.py` to check catalog
+coverage, attachment paths, and placement. Inbox items are reported separately
+from broken paths or misplaced sources.
 Entry quality is baked in at add time - no separate verify pass needed.
 
 ---
@@ -2589,24 +2610,39 @@ Strip Anna's Archive suffixes:
 python3 ~/.agents/skills/citation-add/clean_filenames.py --apply
 ```
 
-Find untracked PDFs:
+Find uncataloged PDFs and EPUBs:
 
 ```bash
 python3 ~/.agents/skills/citation-add/find_missing.py
 ```
 
-- `MISSING:<csv>` - filenames to process (stop here if empty)
+- `MISSING:<csv>` - source-root-relative paths to process (stop here if empty)
 - `CITEKEYS:<csv>` - existing citekeys (keep for collision checks)
 
 ---
 
-## Step 2: For each missing PDF - one at a time
+## Step 2: For each missing source - one at a time
 
 ### 2a. Classify and extract
 
+For an EPUB, inspect the actual package metadata and spine text:
+
+```bash
+python3 ~/.agents/skills/citation-add/inspect_epub.py ~/org/sources/<file.epub> --text
+```
+
+Use the title, creators, publisher, date, and identifiers as evidence, then
+verify the correct entry type and edition. A publisher description is not an
+abstract. Never send EPUBs to `pdftotext`, `pdfinfo`, PDF OCR, or bbox helpers.
+Use its metadata and text for the fallback workflow, omitting `abstract` unless
+the work explicitly supplies one. Org Noter EPUB annotation requires nov.el;
+cataloging and source inspection do not require that reader.
+
+For a PDF, keep the existing extraction workflow:
+
 ```bash
 python3 ~/.agents/skills/citation-add/classify_pdf.py \
-  --pdf ~/org/pdfs/<filename> \
+  --pdf ~/org/sources/<filename> \
   --task extract:bib
 ```
 
@@ -2636,12 +2672,17 @@ python3 ~/.agents/skills/citation-add/check_duplicate.py \
   --title "<title-or-empty>" \
   --author "<author-or-empty>" \
   --year "<year-or-empty>" \
-  --new-pdf "<filename>"
+  --new-file "<filename>"
 ```
 
 Interpret the output token:
 
 - `NO_MATCH` - no duplicate found, proceed to Step 3
+- `ADD_FORMAT` - the DOI identifies the same work in another format. Preserve
+  both files and associate both paths with the existing entry using a
+  semicolon-separated `file` field. Do not create a duplicate entry or delete
+  either format. For inferred matches across PDF/EPUB formats, first verify
+  the work and edition, then follow this same multiple-attachment policy.
 - `KEEP_EXISTING: citekey=... existing_file=... reason=...`
   - Delete the new PDF silently, log the decision in the Step 8 report
   - Do NOT add a new bib entry
@@ -2650,7 +2691,7 @@ Interpret the output token:
   - Delete the old PDF file, log the decision
   - Do NOT add a new bib entry
 - `INFER: citekey=... existing_file=... new_pdf=... hint=...`
-  - Read pages 1-2 of both PDFs using nav.py or Read
+  - Read the opening pages or EPUB sections of both sources
   - Reason about whether they are the same work, using the `hint` as guidance
   - Resolve as KEEP_EXISTING, KEEP_NEW, or escalate to ASK if still unclear
   - If resolved, log the decision; if escalating, show the user the evidence
@@ -2687,7 +2728,7 @@ Format following `~/.agents/skills/citation-add/examples.md`:
 - `publisher = {IEEE}` / `publisher = {ACM}` valid for `@inproceedings`
 - `abstract`: follow **Abstract** below
 
-Add `file = {~/org/pdfs/<filename>}` (temporary - will be updated after rename).
+Add `file = {~/org/sources/<filename>}` (temporary - will be updated after rename).
 
 ---
 
@@ -2724,7 +2765,7 @@ Take the first source that has it:
 3. The PDF:
 
    ```bash
-   python3 ~/.agents/skills/citation-add/extract_abstract.py ~/org/pdfs/<filename>
+   python3 ~/.agents/skills/citation-add/extract_abstract.py ~/org/sources/<filename>
    ```
 
    - `ABSTRACT:<text>` - use it, after the check below
@@ -2752,22 +2793,32 @@ magazine article with no printed abstract, the publisher's registered abstract
 
 ---
 
-## Step 4: Write entry and rename PDF
+## Step 4: Write entry and organize the source
 
 Append the completed entry to the bib.
 
-Rename the PDF to `{citekey}.pdf`:
+Keep the original file format and name it `{citekey}.pdf` or `{citekey}.epub`.
+Use the shared type map to choose its folder; unmapped types stay in the inbox.
 
 ```python
-# Always use Python for renames - shell mv fails on non-ASCII and special chars
-import os
-pdfs = os.path.expanduser('~/org/pdfs')
-files = os.listdir(pdfs)
-src = [f for f in files if f == '<original-filename>'][0]
-os.rename(os.path.join(pdfs, src), os.path.join(pdfs, '<citekey>.pdf'))
+from pathlib import Path
+import sys
+sys.path.insert(0, str(Path.home() / '.agents/skills/citation-add'))
+from source_library import SOURCE_ROOT, category_for
+source = Path('<original-full-path>').expanduser()
+category = category_for('<bib-entry-type>')
+directory = SOURCE_ROOT / category if category else SOURCE_ROOT
+directory.mkdir(parents=True, exist_ok=True)
+destination = directory / ('<citekey>' + source.suffix.lower())
+if destination != source:
+    if destination.exists():
+        raise FileExistsError(destination)
+    source.rename(destination)
+print(destination)
 ```
 
-Update the `file` field in the just-written entry to `{~/org/pdfs/<citekey>.pdf}`.
+Update only the attachment being added in the entry's `file` field to this
+actual destination. Preserve other attachments. Run the source audit again.
 
 ---
 
@@ -2914,7 +2965,7 @@ text. Summaries belong in `annote`, which the site shows as "Brief".
   year      = {2026},
   keywords  = {sycophancy, llm, belief-updating, confirmation-bias, epistemic-risk},
   abstract  = {<the work's own abstract, copied verbatim and complete>},
-  file      = {~/org/pdfs/sycophantic-ai-effects-2602.14270v1.pdf},
+  file      = {~/org/sources/papers/sycophantic-ai-effects-2602.14270v1.pdf},
   doi       = {10.48550/arXiv.2602.14270}
 }
 ```
@@ -2941,7 +2992,7 @@ preserve the information without triggering a validation warning.
   note      = {Publisher: Elsevier},
   keywords  = {mental-workload, nasa-tlx, hci, cognitive-load, measurement},
   abstract  = {<the work's own abstract, copied verbatim and complete>},
-  file      = {~/org/pdfs/1-s2.0-S1071581925000722-main.pdf},
+  file      = {~/org/sources/papers/1-s2.0-S1071581925000722-main.pdf},
   doi       = {10.1016/j.ijhcs.2025.103515}
 }
 ```
@@ -2970,7 +3021,7 @@ full conference name in `booktitle`.
   publisher = {IEEE},
   keywords  = {software-architecture, genai, llm, automation, architecture-decisions},
   abstract  = {<the work's own abstract, copied verbatim and complete>},
-  file      = {~/org/pdfs/Will_Generative_AI_Fill_the_Automation_Gap_in_Software_Architecting.pdf},
+  file      = {~/org/sources/papers/Will_Generative_AI_Fill_the_Automation_Gap_in_Software_Architecting.pdf},
   doi       = {10.1109/ICSA-C65153.2025.00014}
 }
 ```
@@ -2996,7 +3047,7 @@ proceedings title in `booktitle`.
   publisher = {ACM},
   keywords  = {language-models, responsible-ai, risk-taxonomy, safety, ethics},
   abstract  = {<the work's own abstract, copied verbatim and complete>},
-  file      = {~/org/pdfs/3531146.3533088.pdf},
+  file      = {~/org/sources/papers/3531146.3533088.pdf},
   doi       = {10.1145/3531146.3533088}
 }
 ```
@@ -3021,7 +3072,7 @@ no publisher in the traditional sense. Use the conference short name (e.g.
   year      = {2024},
   keywords  = {sycophancy, llm, rlhf, human-feedback, alignment},
   abstract  = {<the work's own abstract, copied verbatim and complete>},
-  file      = {~/org/pdfs/2310.13548v4.pdf},
+  file      = {~/org/sources/papers/2310.13548v4.pdf},
   doi       = {10.48550/arXiv.2310.13548}
 }
 ```
@@ -3045,7 +3096,7 @@ read - do not guess it.
   keywords  = {cognitive-surrender, dual-process, human-ai-interaction,
                reasoning, tri-system-theory},
   abstract  = {<the work's own abstract, copied verbatim and complete>},
-  file      = {~/org/pdfs/ssrn-6097646.pdf}
+  file      = {~/org/sources/ssrn-6097646.pdf}
 }
 ```
 
@@ -3085,7 +3136,7 @@ Omit `abstract` entirely. Omit `doi` unless a DOI is printed in the book itself.
   year      = {2010},
   keywords  = {continuous-delivery, continuous-integration, deployment, build-automation, devops},
   note      = {ISBN: 978-0-321-60191-9},
-  file      = {~/org/pdfs/Continuous Delivery_ Reliable Software Releases through -- Humble, Jez & Farley, David.pdf}
+  file      = {~/org/sources/books/Continuous Delivery_ Reliable Software Releases through -- Humble, Jez & Farley, David.pdf}
 }
 ```
 
@@ -3111,7 +3162,7 @@ or paraphrase. Omit `doi` if not found on pages read.
   pages     = {70--75},
   year      = {2004},
   keywords  = {choice, decision-making, cognitive-load, paradox-of-choice, well-being},
-  file      = {~/org/pdfs/schwartz2004tyranny-of-choice.pdf}
+  file      = {~/org/sources/papers/schwartz2004tyranny-of-choice.pdf}
 }
 ```
 
@@ -3136,7 +3187,7 @@ for `@techreport`, or to `note` for `@misc`.
   note        = {Lingenic LLC},
   keywords    = {pseudocode, knowledge-representation, formal-systems, notation, llm},
   abstract    = {<the work's own abstract, copied verbatim and complete>},
-  file        = {~/org/pdfs/knuth-pseudocode-generalization.pdf}
+  file        = {~/org/sources/knuth-pseudocode-generalization.pdf}
 }
 ```
 #+end_src
@@ -4215,6 +4266,7 @@ Exit codes:
 
 import sys
 import re
+import os
 import argparse
 
 
@@ -4242,7 +4294,8 @@ def load_bib(bib_path):
     """Parse bib into list of dicts with keys: citekey, doi, title, author, year, file."""
     entries = []
     try:
-        text = open(bib_path, encoding='utf-8').read()
+        with open(bib_path, encoding='utf-8') as stream:
+            text = stream.read()
     except FileNotFoundError:
         return entries
 
@@ -4368,7 +4421,7 @@ def main():
     parser.add_argument('--title', default='')
     parser.add_argument('--author', default='')
     parser.add_argument('--year', default='')
-    parser.add_argument('--new-pdf', default='')
+    parser.add_argument('--new-file', '--new-pdf', dest='new_pdf', default='')
     args = parser.parse_args()
 
     new_doi = normalize_doi(args.doi)
@@ -4386,6 +4439,11 @@ def main():
 
         # --- Case 1: exact DOI match (deterministic) ---
         if new_doi and e['doi'] and new_doi == e['doi']:
+            new_format = os.path.splitext(new_pdf)[1].lower()
+            existing_formats = {'.' + suffix.lower() for suffix in re.findall(r'\.(pdf|epub)(?=[;:\s]|$)', existing_file, re.I)}
+            if new_format in {'.pdf', '.epub'} and existing_formats and new_format not in existing_formats:
+                print(f"ADD_FORMAT: citekey={citekey} existing_file={existing_file} new_file={new_pdf} reason=Same DOI, additional source format")
+                return
             print(f"KEEP_EXISTING: citekey={citekey} existing_file={existing_file} "
                   f"reason=DOI match ({new_doi})")
             return
@@ -4441,161 +4499,97 @@ if __name__ == '__main__':
 
 #+begin_src python :tangle "./dot_agents/skills/citation-add/clean_filenames.py"
 #!/usr/bin/env python3
-"""
-Strip Anna's Archive suffixes and trailing UUIDs from PDF filenames in ~/org/pdfs/.
+"""Clean download suffixes on uncataloged PDF/EPUB filenames, recursively.
 
-Patterns removed (from the stem, working right-to-left):
-  " -- <anything> -- Anna's Archive"   (greedy, catches doi slugs before the UUID)
-  " -- Anna's Archive"                 (standalone label)
-  " -- <hex32>"                        (bare 32-char hex UUID with no label)
-
-Dry-run by default. Pass --apply to actually rename.
+Known attachments are left alone so their bibliography and annotation paths
+stay valid. Dry-run by default; --apply renames within each current directory.
 """
-import re
-import os
-import glob
 import argparse
+from pathlib import Path
+import re
 
-pdfs_dir = os.path.expanduser("~/org/pdfs/")
+from source_library import BIB_PATH, SOURCE_ROOT, catalog_files, read_entries, source_files
 
-ANNAS = r"Anna\u2019s Archive|Anna's Archive"  # U+2019 right single quote or ASCII
+ANNAS = r"Anna\u2019s Archive|Anna's Archive"
 
-def clean_stem(stem: str) -> str:
-    # Remove " -- <anything> -- Anna's Archive" (handles doi-slug + uuid before label)
-    stem = re.sub(r"\s*--\s*.+--\s*(?:" + ANNAS + r")\s*$", "", stem, flags=re.IGNORECASE)
-    # Remove standalone " -- Anna's Archive"
-    stem = re.sub(r"\s*--\s*(?:" + ANNAS + r")\s*$", "", stem, flags=re.IGNORECASE)
-    # Remove trailing bare UUID " -- <hex32>"
-    stem = re.sub(r"\s*--\s*[0-9a-f]{32}\s*$", "", stem, flags=re.IGNORECASE)
+
+def clean_stem(stem):
+    stem = re.sub(r"\s*--\s*.+--\s*(?:" + ANNAS + r")\s*$", "", stem, flags=re.I)
+    stem = re.sub(r"\s*--\s*(?:" + ANNAS + r")\s*$", "", stem, flags=re.I)
+    stem = re.sub(r"\s*--\s*[0-9a-f]{32}\s*$", "", stem, flags=re.I)
     return stem.strip()
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--apply", action="store_true", help="Actually rename files (default: dry-run)")
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, default=SOURCE_ROOT)
+    parser.add_argument("--bib", type=Path, default=BIB_PATH)
+    parser.add_argument("--apply", action="store_true")
     args = parser.parse_args()
+    indexed = catalog_files(read_entries(args.bib), args.bib, args.root)
+    renamed = proposed = 0
+    for path in source_files(args.root):
+        if path.resolve() in indexed:
+            continue
+        name = clean_stem(path.stem)
+        if not name or name == path.stem:
+            continue
+        destination = path.with_name(name + path.suffix)
+        proposed += 1
+        print(f"{path} -> {destination}")
+        if destination.exists():
+            print("SKIPPED: target already exists")
+        elif args.apply:
+            path.rename(destination)
+            renamed += 1
+    print(f"{renamed} file(s) renamed." if args.apply else f"{proposed} file(s) would be renamed. Pass --apply to rename.")
 
-    changes = []
-    for path in sorted(glob.glob(os.path.join(pdfs_dir, "*.pdf"))):
-        old_name = os.path.basename(path)
-        stem, ext = os.path.splitext(old_name)
-        new_stem = clean_stem(stem)
-        new_name = new_stem + ext
-        if new_name != old_name:
-            changes.append((path, old_name, new_name))
 
-    if not changes:
-        print("Nothing to rename.")
-    else:
-        for path, old, new in changes:
-            print(f"  {old}")
-            print(f"→ {new}")
-            print()
-            if args.apply:
-                new_path = os.path.join(pdfs_dir, new)
-                if os.path.exists(new_path):
-                    print(f"  SKIPPED (target already exists)")
-                else:
-                    os.rename(path, new_path)
-        if not args.apply:
-            print(f"{len(changes)} file(s) would be renamed. Pass --apply to rename.")
-        else:
-            print(f"{len(changes)} file(s) renamed.")
+if __name__ == "__main__":
+    main()
 #+end_src
 
 #+begin_src python :tangle "./dot_agents/skills/citation-add/find_missing.py"
 #!/usr/bin/env python3
-"""
-Find PDF files in ~/org/pdfs/ that have no matching file= entry in ~/org/bib/references.bib.
+"""List uncataloged PDF and EPUB files, relative to the source-library root."""
+import argparse
+import csv
+from io import StringIO
+from pathlib import Path
 
-Output:
-  MISSING:<comma-separated filenames>   (empty after colon if none)
-  CITEKEYS:<comma-separated citekeys>
-"""
-import re
-import os
-import glob
+from source_library import BIB_PATH, SOURCE_ROOT, catalog_files, read_entries, source_files
 
-bib_path = os.path.expanduser("~/org/bib/references.bib")
-pdfs_dir = os.path.expanduser("~/org/pdfs/")
 
-with open(bib_path) as f:
-    bib = f.read()
+def csv_line(values):
+    output = StringIO()
+    csv.writer(output, lineterminator="").writerow(values)
+    return output.getvalue()
 
-file_vals = re.findall(r'file\s*=\s*\{([^}]+)\}', bib)
-bib_files = {os.path.basename(v.strip()) for v in file_vals}
 
-citekeys = set(re.findall(r'@\w+\{(\S+),', bib))
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, default=SOURCE_ROOT)
+    parser.add_argument("--bib", type=Path, default=BIB_PATH)
+    args = parser.parse_args()
+    root = args.root.expanduser().resolve()
+    entries = read_entries(args.bib)
+    indexed = catalog_files(entries, args.bib, root)
+    missing = [str(path.relative_to(root)) for path in source_files(root)
+               if path.resolve() not in indexed]
+    print("MISSING:" + csv_line(missing))
+    if missing:
+        print("CITEKEYS:" + csv_line(sorted(entry.key for entry in entries)))
 
-disk_files = {os.path.basename(p) for p in glob.glob(os.path.join(pdfs_dir, "*.pdf"))}
 
-missing = sorted(disk_files - bib_files)
-
-print("MISSING:" + ",".join(missing))
-if missing:
-    print("CITEKEYS:" + ",".join(sorted(citekeys)))
+if __name__ == "__main__":
+    main()
 #+end_src
 
-#+begin_src python :tangle "./dot_agents/skills/citation-add/audit_abstracts.py"
-#!/usr/bin/env python3
-"""Audit `abstract` fields in references.bib against the works' own abstracts.
-
-Every abstract must be the work's own abstract, verbatim and complete, or be
-absent. This script gathers reference texts, scores each bib abstract, and
-proposes an action per entry: VERBATIM (keep), REPLACE (with a verified source
-abstract), DELETE (the work has no abstract), or REVIEW (it cannot tell; check
-the page by hand).
-
-Usage (BIB is normally ~/org/bib/references.bib):
-    audit_abstracts.py fetch    BIB [--keys k1,k2]   # fill the cache
-    audit_abstracts.py score    BIB [--keys k1,k2]   # write the report, print results
-    audit_abstracts.py show     BIB KEY              # bib text next to every source, for REVIEW
-    audit_abstracts.py apply    BIB [--keys k1,k2] [--overrides FILE] [--dry-run]
-    audit_abstracts.py preview  BIB FILE KEY         # text an override would write
-    audit_abstracts.py reviewed BIB KEY NOTE         # record a hand-checked abstract
-
---keys limits fetch, score and apply to those citekeys (new entries); without
-it the whole bib is audited.
-
-Sources, cached under ~/.cache/citation-add/abstract-audit/:
-    crossref  https://api.crossref.org/works/<doi>          (JATS converted)
-    openalex  https://api.openalex.org/works/doi:<doi>      (inverted index rebuilt)
-    arxiv     https://export.arxiv.org/api/query?id_list=   (for arXiv ids)
-    search    CrossRef title lookup for entries without a DOI (exact title only;
-              the bib's doi field is never changed)
-    pdf       pdftotext on the `file` field (tesseract OCR for scans), plus
-              regex cuts of the abstract
-
-No personal data is sent: requests carry a generic User-Agent and no mailto.
-Needs poppler (pdftotext, pdfinfo, pdftoppm) and tesseract.
-"""
-
-import difflib
-import html
-import json
+#+begin_src python :tangle "./dot_agents/skills/citation-add/source_library.py"
+"""Shared catalog and path rules for the local source library."""
+from pathlib import Path
 import os
 import re
-import subprocess
-import sys
-import threading
-import time
-import unicodedata
-import urllib.error
-import urllib.parse
-import urllib.request
-import xml.etree.ElementTree as ET
-from concurrent.futures import ThreadPoolExecutor
-
-HERE = os.path.dirname(os.path.abspath(__file__))
-STATE = os.path.expanduser("~/.cache/citation-add/abstract-audit")
-CACHE = os.path.join(STATE, "cache")
-REPORT = os.path.join(STATE, "report.json")
-REVIEWED = os.path.join(STATE, "reviewed.json")
-UA = "citation-add-abstract-audit/1.0 (python-urllib)"
-
-# --------------------------------------------------------------------------
-# BibTeX parsing with exact spans
-# --------------------------------------------------------------------------
-
 
 class Field:
     def __init__(self, name, value, vstart, vend, line_start, line_end, delim):
@@ -4704,6 +4698,390 @@ def parse_bib(text):
                 i = sm.end()
         entries.append(e)
     return entries
+
+SOURCE_ROOT = Path.home() / "org/sources"
+BIB_PATH = Path.home() / "org/bib/references.bib"
+SOURCE_EXTENSIONS = {".pdf", ".epub"}
+BOOK_TYPES = {"book", "mvbook", "collection", "mvcollection", "inbook",
+              "incollection", "bookinbook", "suppbook", "suppcollection",
+              "reference", "mvreference", "inreference", "booklet"}
+PAPER_TYPES = {"article", "inproceedings", "conference"}
+
+
+def category_for(entry_type):
+    kind = entry_type.lower()
+    if kind in BOOK_TYPES:
+        return "books"
+    if kind in PAPER_TYPES:
+        return "papers"
+    return None
+
+
+def read_entries(bib=BIB_PATH):
+    return parse_bib(Path(bib).expanduser().read_text(encoding="utf-8"))
+
+
+def attachment_paths(entry, bib=BIB_PATH, root=SOURCE_ROOT):
+    """Resolve simple and Zotero/Mendeley file fields without basename matching."""
+    result = []
+    for item in re.split(r"(?<!\\);", entry.get("file") or ""):
+        item = item.strip()
+        if not item:
+            continue
+        triplet = re.fullmatch(r"[^:]*:((?:/|~|\.{1,2}/).+):[A-Za-z0-9]+", item)
+        if triplet:
+            item = triplet.group(1)
+        for value in re.split(r"(?<!\\):(?=(?:/|~|\.{1,2}/))", item):
+            value = re.sub(r"\\([:;])", r"\1", value)
+            path = Path(os.path.expandvars(value)).expanduser()
+            if not path.is_absolute():
+                candidates = [Path(root) / path, Path(bib).expanduser().parent / path]
+                path = next((candidate for candidate in candidates if candidate.exists()), candidates[0])
+            result.append(path.resolve())
+    return result
+
+
+def source_files(root=SOURCE_ROOT):
+    return sorted(path for path in Path(root).expanduser().rglob("*")
+                  if path.is_file() and path.suffix.lower() in SOURCE_EXTENSIONS)
+
+
+def catalog_files(entries, bib=BIB_PATH, root=SOURCE_ROOT):
+    indexed = {}
+    for entry in entries:
+        for path in attachment_paths(entry, bib, root):
+            indexed.setdefault(path, []).append(entry)
+    return indexed
+#+end_src
+
+#+begin_src python :tangle "./dot_agents/skills/citation-add/audit_sources.py"
+#!/usr/bin/env python3
+"""Read-only audit of source attachments, folder placement, and inbox items."""
+import argparse
+import json
+from pathlib import Path
+
+from source_library import (BIB_PATH, SOURCE_ROOT, attachment_paths,
+                            catalog_files, category_for, read_entries, source_files)
+
+
+def audit(root, bib):
+    root, bib = Path(root).expanduser().resolve(), Path(bib).expanduser().resolve()
+    entries = read_entries(bib)
+    indexed = catalog_files(entries, bib, root)
+    issues = []
+    files = source_files(root)
+    for path in files:
+        matches = indexed.get(path.resolve(), [])
+        relative = str(path.relative_to(root))
+        if not matches:
+            issues.append({"kind": "uncataloged", "file": relative})
+            continue
+        if len(matches) > 1:
+            issues.append({"kind": "shared-attachment", "file": relative,
+                           "citekeys": [entry.key for entry in matches]})
+        categories = {category_for(entry.etype) for entry in matches}
+        if len(categories) != 1:
+            issues.append({"kind": "conflicting-types", "file": relative})
+            continue
+        expected = categories.pop()
+        if expected is None:
+            issues.append({"kind": "needs-category", "file": relative,
+                           "types": sorted({entry.etype for entry in matches}),
+                           "citekeys": [entry.key for entry in matches]})
+        elif path.relative_to(root).parts[0] != expected:
+            issues.append({"kind": "unfiled" if path.parent == root else "misplaced",
+                           "file": relative, "expected": expected,
+                           "citekeys": [entry.key for entry in matches]})
+    for entry in entries:
+        for path in attachment_paths(entry, bib, root):
+            if not path.is_file():
+                issues.append({"kind": "missing-attachment", "file": str(path),
+                               "citekeys": [entry.key]})
+    return {"root": str(root), "files": len(files), "entries": len(entries), "issues": issues}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, default=SOURCE_ROOT)
+    parser.add_argument("--bib", type=Path, default=BIB_PATH)
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args()
+    report = audit(args.root, args.bib)
+    if args.json:
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+    else:
+        print(f"{report['files']} PDF/EPUB files; {report['entries']} bibliography entries")
+        for issue in report["issues"]:
+            context = ", ".join(issue.get("citekeys", []))
+            expected = f" -> {issue['expected']}/" if "expected" in issue else ""
+            print(f"{issue['kind']}: {issue['file']}{expected}" + (f" [{context}]" if context else ""))
+    # The root is an inbox. Pending classifications and new files are reports,
+    # while broken paths and incorrect established placement fail the audit.
+    return int(any(issue["kind"] in {"missing-attachment", "misplaced", "conflicting-types"}
+                   for issue in report["issues"]))
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+#+end_src
+
+#+begin_src python :tangle "./dot_agents/skills/citation-add/inspect_epub.py"
+#!/usr/bin/env python3
+"""Read EPUB package metadata and, optionally, its spine text using the standard library."""
+import argparse
+from html.parser import HTMLParser
+import json
+from pathlib import Path
+import posixpath
+from urllib.parse import unquote
+import xml.etree.ElementTree as ET
+from zipfile import ZipFile
+
+
+class Text(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts = []
+        self.hidden = 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag in {"script", "style"}:
+            self.hidden += 1
+
+    def handle_endtag(self, tag):
+        if tag in {"script", "style"}:
+            self.hidden = max(0, self.hidden - 1)
+        if tag in {"p", "div", "li", "h1", "h2", "h3", "section", "br"}:
+            self.parts.append("\n")
+
+    def handle_data(self, data):
+        if not self.hidden:
+            self.parts.append(data)
+
+
+def inspect(path, include_text=False):
+    with ZipFile(Path(path).expanduser()) as archive:
+        container = ET.fromstring(archive.read("META-INF/container.xml"))
+        rootfile = container.find(".//{*}rootfile")
+        if rootfile is None or not rootfile.get("full-path"):
+            raise ValueError("EPUB has no package document")
+        package_path = rootfile.get("full-path")
+        package = ET.fromstring(archive.read(package_path))
+        metadata = package.find("{*}metadata")
+        result = {"format": "epub", "metadata": {}}
+        if metadata is not None:
+            for item in metadata:
+                if item.tag.startswith("{http://purl.org/dc/elements/1.1/}"):
+                    result["metadata"].setdefault(item.tag.rsplit("}", 1)[1], []).append("".join(item.itertext()).strip())
+        if include_text:
+            manifest = {item.get("id"): item for item in package.findall("{*}manifest/{*}item")}
+            result["sections"] = []
+            for reference in package.findall("{*}spine/{*}itemref"):
+                item = manifest.get(reference.get("idref"))
+                if item is None or item.get("media-type") not in {"application/xhtml+xml", "text/html"}:
+                    continue
+                filename = posixpath.normpath(posixpath.join(posixpath.dirname(package_path), unquote(item.get("href").split("#", 1)[0])))
+                reader = Text()
+                reader.feed(archive.read(filename).decode("utf-8-sig"))
+                result["sections"].append({"file": filename, "text": "".join(reader.parts).strip()})
+        return result
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("file", type=Path)
+    parser.add_argument("--text", action="store_true", help="Include XHTML content in spine order")
+    args = parser.parse_args()
+    print(json.dumps(inspect(args.file, args.text), ensure_ascii=False, indent=2))
+
+
+if __name__ == "__main__":
+    main()
+#+end_src
+
+#+begin_src python :tangle "./dot_agents/skills/citation-add/test_sources.py"
+"""Behavior checks for source-library discovery, classification, and EPUBs."""
+from contextlib import redirect_stdout
+from io import StringIO
+import json
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import patch
+from zipfile import ZipFile
+
+from audit_sources import audit
+from clean_filenames import main as clean
+from find_missing import main as missing
+from inspect_epub import inspect
+from source_library import attachment_paths, catalog_files, category_for, read_entries
+from check_duplicate import main as duplicate
+
+
+class SourcesTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.sources = self.root / "sources"
+        self.sources.mkdir()
+        self.bib = self.root / "references.bib"
+
+    def call(self, function, *args):
+        with patch("sys.argv", ["helper", "--root", str(self.sources), "--bib", str(self.bib), *args]), redirect_stdout(StringIO()) as output:
+            function()
+        return output.getvalue()
+
+    def test_catalog_resolves_nested_fields_and_multiple_formats(self):
+        (self.sources / "books").mkdir()
+        pdf, epub = self.sources / "books/a.pdf", self.sources / "books/a.epub"
+        pdf.touch()
+        epub.touch()
+        self.bib.write_text('@book{a, title={A {nested} title}, file={books/a.pdf;books/a.epub}}\n')
+        entries = read_entries(self.bib)
+        self.assertEqual(entries[0].get("title"), "A {nested} title")
+        self.assertEqual(set(attachment_paths(entries[0], self.bib, self.sources)), {pdf.resolve(), epub.resolve()})
+        self.assertEqual(len(catalog_files(entries, self.bib, self.sources)), 2)
+        self.assertEqual(self.call(missing), "MISSING:\n")
+
+    def test_discovery_compares_paths_instead_of_basenames(self):
+        for folder in ("books", "papers"):
+            (self.sources / folder).mkdir()
+            (self.sources / folder / "same.pdf").touch()
+        self.bib.write_text('@book{a, file={books/same.pdf}}\n')
+        self.assertIn("MISSING:papers/same.pdf", self.call(missing))
+
+    def test_audit_reports_broken_and_misplaced_but_keeps_inbox(self):
+        (self.sources / "papers").mkdir()
+        (self.sources / "papers/book.epub").touch()
+        (self.sources / "incoming.epub").touch()
+        (self.sources / "thesis.pdf").touch()
+        self.bib.write_text('@book{b, file={papers/book.epub}}\n@article{missing, file={papers/absent.pdf}}\n@phdthesis{t, file={thesis.pdf}}\n')
+        report = audit(self.sources, self.bib)
+        kinds = {issue["kind"] for issue in report["issues"]}
+        self.assertEqual(kinds, {"misplaced", "uncataloged", "missing-attachment", "needs-category"})
+        self.assertEqual(category_for("incollection"), "books")
+        self.assertEqual(category_for("inproceedings"), "papers")
+        self.assertIsNone(category_for("misc"))
+
+    def test_cleanup_preserves_known_paths_and_does_not_overwrite(self):
+        (self.sources / "books").mkdir()
+        known = self.sources / "books/Known -- Anna's Archive.epub"
+        known.write_bytes(b"known")
+        self.bib.write_text('@book{k, file={' + str(known) + '}}\n')
+        incoming = self.sources / "New -- Anna's Archive.epub"
+        incoming.write_bytes(b"incoming")
+        existing = self.sources / "New.epub"
+        existing.write_bytes(b"existing")
+        self.call(clean, "--apply")
+        self.assertEqual(known.read_bytes(), b"known")
+        self.assertEqual(incoming.read_bytes(), b"incoming")
+        self.assertEqual(existing.read_bytes(), b"existing")
+        existing.unlink()
+        self.call(clean, "--apply")
+        self.assertFalse(incoming.exists())
+        self.assertEqual(existing.read_bytes(), b"incoming")
+
+    def test_epub_metadata_and_spine_order(self):
+        epub = self.root / "book.epub"
+        with ZipFile(epub, "w") as archive:
+            archive.writestr("mimetype", "application/epub+zip")
+            archive.writestr("META-INF/container.xml", '<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf"/></rootfiles></container>')
+            archive.writestr("OEBPS/content.opf", '<package xmlns="http://www.idpf.org/2007/opf"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>A Book</dc:title><dc:creator>A Writer</dc:creator><dc:identifier>urn:isbn:1234</dc:identifier><dc:description>A publisher description, not an abstract.</dc:description></metadata><manifest><item id="two" href="two.xhtml" media-type="application/xhtml+xml"/><item id="one" href="one.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="one"/><itemref idref="two"/></spine></package>')
+            archive.writestr("OEBPS/one.xhtml", '<html><head><style>hidden style</style></head><body><h1>First</h1><p>A &amp; B.</p><script>hidden script</script></body></html>')
+            archive.writestr("OEBPS/two.xhtml", '<html><body><p>Second section.</p></body></html>')
+        metadata = inspect(epub)
+        self.assertEqual(metadata["metadata"]["creator"], ["A Writer"])
+        self.assertNotIn("abstract", metadata["metadata"])
+        self.assertNotIn("sections", metadata)
+        result = inspect(epub, True)
+        self.assertEqual([section["file"] for section in result["sections"]], ["OEBPS/one.xhtml", "OEBPS/two.xhtml"])
+        self.assertIn("A & B.", result["sections"][0]["text"])
+        self.assertNotIn("hidden", result["sections"][0]["text"])
+
+    def test_same_work_in_another_format_is_preserved(self):
+        self.bib.write_text('@book{book, title={A Book}, doi={10.1234/example}, file={book.pdf}}\n')
+        for filename, token in [('book.epub', 'ADD_FORMAT:'), ('book.pdf', 'KEEP_EXISTING:')]:
+            with patch('sys.argv', ['duplicate', '--bib', str(self.bib), '--doi', '10.1234/example', '--new-file', filename]), redirect_stdout(StringIO()) as output:
+                duplicate()
+            self.assertTrue(output.getvalue().startswith(token))
+
+    def test_epub_is_not_sent_to_pdf_abstract_extraction(self):
+        from audit_abstracts import fetch_pdf
+        epub = self.sources / 'book.epub'
+        epub.touch()
+        with patch('audit_abstracts.subprocess.run', side_effect=AssertionError('PDF tools must not run on EPUBs')):
+            self.assertEqual(fetch_pdf('book', str(epub))['status'], 415)
+
+
+if __name__ == "__main__":
+    unittest.main()
+#+end_src
+
+#+begin_src python :tangle "./dot_agents/skills/citation-add/audit_abstracts.py"
+#!/usr/bin/env python3
+"""Audit `abstract` fields in references.bib against the works' own abstracts.
+
+Every abstract must be the work's own abstract, verbatim and complete, or be
+absent. This script gathers reference texts, scores each bib abstract, and
+proposes an action per entry: VERBATIM (keep), REPLACE (with a verified source
+abstract), DELETE (the work has no abstract), or REVIEW (it cannot tell; check
+the page by hand).
+
+Usage (BIB is normally ~/org/bib/references.bib):
+    audit_abstracts.py fetch    BIB [--keys k1,k2]   # fill the cache
+    audit_abstracts.py score    BIB [--keys k1,k2]   # write the report, print results
+    audit_abstracts.py show     BIB KEY              # bib text next to every source, for REVIEW
+    audit_abstracts.py apply    BIB [--keys k1,k2] [--overrides FILE] [--dry-run]
+    audit_abstracts.py preview  BIB FILE KEY         # text an override would write
+    audit_abstracts.py reviewed BIB KEY NOTE         # record a hand-checked abstract
+
+--keys limits fetch, score and apply to those citekeys (new entries); without
+it the whole bib is audited.
+
+Sources, cached under ~/.cache/citation-add/abstract-audit/:
+    crossref  https://api.crossref.org/works/<doi>          (JATS converted)
+    openalex  https://api.openalex.org/works/doi:<doi>      (inverted index rebuilt)
+    arxiv     https://export.arxiv.org/api/query?id_list=   (for arXiv ids)
+    search    CrossRef title lookup for entries without a DOI (exact title only;
+              the bib's doi field is never changed)
+    pdf       pdftotext on the `file` field (tesseract OCR for scans), plus
+              regex cuts of the abstract
+
+No personal data is sent: requests carry a generic User-Agent and no mailto.
+Needs poppler (pdftotext, pdfinfo, pdftoppm) and tesseract.
+"""
+
+import difflib
+import html
+import json
+import os
+import re
+import subprocess
+import sys
+import threading
+import time
+import unicodedata
+import urllib.error
+import urllib.parse
+import urllib.request
+import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+STATE = os.path.expanduser("~/.cache/citation-add/abstract-audit")
+CACHE = os.path.join(STATE, "cache")
+REPORT = os.path.join(STATE, "report.json")
+REVIEWED = os.path.join(STATE, "reviewed.json")
+UA = "citation-add-abstract-audit/1.0 (python-urllib)"
+
+# --------------------------------------------------------------------------
+# BibTeX parsing with exact spans
+# --------------------------------------------------------------------------
+
+
+from source_library import parse_bib
 
 
 # --------------------------------------------------------------------------
@@ -5055,6 +5433,12 @@ def ocr_pdf(path, first=None, last=None):
 
 
 def fetch_pdf(key, path):
+    # An EPUB attachment must never be sent through the PDF/OCR pipeline.
+    from source_library import attachment_paths
+    pdfs = [str(p) for p in attachment_paths({"file": path}) if p.suffix.lower() == ".pdf"]
+    if not pdfs:
+        return {"status": 415, "path": path, "reason": "No PDF attachment"}
+    path = pdfs[0]
     def go():
         p = os.path.expanduser(path)
         if not os.path.exists(p):
@@ -5893,8 +6277,8 @@ if __name__ == "__main__":
 #+begin_src yaml :tangle "./dot_agents/skills/citation-add/agents/openai.yaml"
 interface:
   display_name: "Citation Add"
-  short_description: "Add new PDFs in ~/org/pdfs to references.bib with verbatim abstracts"
-  default_prompt: "Use $citation-add to add the new PDFs in ~/org/pdfs to my bibliography."
+  short_description: "Catalog PDFs and EPUBs in the source library"
+  default_prompt: "Use $citation-add to catalog new PDFs and EPUBs in ~/org/sources."
 #+end_src
 
 #+begin_src fundamental :tangle "./dot_claude/skills/symlink_citation-add.tmpl"
@@ -6149,7 +6533,15 @@ For each claim-citekey pair that is `DIRECT_EVIDENCE` AND `conf >= 60` AND has a
 
 ,**CRITICAL - compaction safety:** After reading PDF text and identifying a passage, immediately write the roam file annotation AND insert the cite+transclusion block into thesis.org in the same response, before doing anything else. Never defer these writes to a later message. Context compaction can occur at any time between messages, wiping PDF text from context. If the writes are deferred, the work is lost. The sequence within a single message must be: (1) bbox, (2) create/update roam file, (3) insert cite+transclude into thesis.org. All three steps must complete before moving on to the next paper.
 
-### 3.5a. Read roam file and check for local PDF
+### 3.5a. Read roam file and check for a local source
+
+Source attachments live recursively under `~/org/sources/`; the root is an
+inbox. Resolve each entry's actual `file` field rather than assuming a flat
+filename. For EPUBs, use `citation-add/inspect_epub.py <file> --text` to read
+metadata and sections. Record verified quotations with chapter/section
+locations, without fabricated PDF page numbers or HIGHLIGHT coordinates.
+The PDF page, OCR, and bbox steps below apply only to PDFs. A source may have
+both PDF and EPUB attachments; preserve both formats.
 
 ,**First:** check if `~/org/roam/refs/<citekey>.org` exists and read it. Scan all existing `citation-hunt annotations` subheadings for passages that already match the current claim. If a match exists:
 - Reuse the existing annotation (cite key + heading) immediately - emit the `[cite:]` and `#+transclude:` block into thesis.org right away
@@ -6227,7 +6619,7 @@ For each citekey, create the roam ref file if needed, then add one subheading pe
    python3 ~/.agents/skills/citation-hunt/create_ref.py \
      --citekey <key> \
      --title "<title from bib>" \
-     --pdf "<file from bib>"
+     --file "<one resolved PDF or EPUB attachment path>"
    ```
 3. For each passage, run bbox.py to write the green highlight and get coordinates:
    ```bash
@@ -6335,7 +6727,7 @@ Skip papers already in `~/org/bib/references.bib` (they were already scanned in 
 
 Read `~/.agents/skills/citation-hunt/sources.md`. Try each source in the listed order.
 
-For each flagged upstream reference not already in `~/org/pdfs/`:
+For each flagged upstream reference not already in `~/org/sources/`:
 1. Work through the sources in `sources.md` in order until a PDF is found or all are exhausted
 2. Do NOT attempt paywalled downloads (IEEE Xplore, ACM DL, Springer without open access)
 3. If found via a source not in `sources.md`, append it to the "Additional sources found during hunting" section of `sources.md`
@@ -6363,7 +6755,7 @@ Upstream candidates found:
     - ...
 
 Actions if approved:
-  - Download N PDFs to ~/org/pdfs/
+  - Download N PDFs to ~/org/sources/
   - Run /citation-add to generate bib entries
   - Re-run passage search on new papers
 
@@ -6375,13 +6767,13 @@ Approve downloads? List any to skip.
 ### 4e. Fetch approved PDFs and process
 
 For each approved candidate with a found PDF URL:
-1. Download to `~/org/pdfs/` using curl:
+1. Download to `~/org/sources/` using curl:
    ```bash
-   curl -L "<url>" -o "~/org/pdfs/<authorYEARkeyword>.pdf"
+   curl -L "<url>" -o "$HOME/org/sources/<authorYEARkeyword>.pdf"
    ```
 2. Verify the file is a valid PDF:
    ```bash
-   pdfinfo ~/org/pdfs/<filename>.pdf 2>/dev/null | head -3
+   pdfinfo ~/org/sources/<filename>.pdf 2>/dev/null | head -3
    ```
 3. If verification fails, delete the file and report as failed.
 
@@ -6531,7 +6923,7 @@ rm ~/.cache/citation-hunt/scratch/<slug>.org
 - Never cite a survey paper for a claim that the survey itself attributes to a primary source - flag it and suggest the primary source instead.
 - Never invent DOIs, URLs, or quotes. If you can't find a direct quote from the abstract supporting the claim, say so.
 - Never download from paywalled sources.
-- The verbatim abstract requirement is enforced by `/citation-add`, not this skill - just get the PDFs into `~/org/pdfs/`.
+- The verbatim abstract requirement is enforced by `/citation-add`, not this skill - just get the PDFs into `~/org/sources/`.
 - Process every claim regardless of whether it already has a citation. The goal is the best possible citation, not just any citation.
 - The scratch file is the source of truth across phases. When in doubt, re-read it rather than reconstructing from context.
 - A candidate from world knowledge with `medium` or `low` confidence must be flagged as unverified in the final report. Never emit a `[cite:]` for an unverified paper.
@@ -6591,7 +6983,7 @@ Create a new org-roam ref file for a citekey, matching the citar-org-roam
 capture template defined in doom config.
 
 Usage:
-    python3 create_ref.py --citekey KEY --title TITLE --pdf ~/org/pdfs/file.pdf
+    python3 create_ref.py --citekey KEY --title TITLE --file ~/org/sources/<file.pdf-or.epub>
 
 Output:
     CREATED:<path>   - file was created
@@ -6614,7 +7006,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--citekey", required=True)
     parser.add_argument("--title", required=True)
-    parser.add_argument("--pdf", required=True)
+    parser.add_argument("--file", "--pdf", dest="source", required=True, help="Local reference attachment, including PDF or EPUB")
     args = parser.parse_args()
 
     out_path = os.path.join(ROAM_REFS_DIR, f"{args.citekey}.org")
@@ -6623,7 +7015,7 @@ def main():
         print(f"EXISTS:{out_path}")
         return
 
-    pdf_path = os.path.expanduser(args.pdf)
+    pdf_path = os.path.expanduser(args.source)
     date_str = datetime.now().strftime("%Y-%m-%d %a")
 
     content = f""":PROPERTIES:

@@ -244,7 +244,15 @@ For each claim-citekey pair that is `DIRECT_EVIDENCE` AND `conf >= 60` AND has a
 
 **CRITICAL - compaction safety:** After reading PDF text and identifying a passage, immediately write the roam file annotation AND insert the cite+transclusion block into thesis.org in the same response, before doing anything else. Never defer these writes to a later message. Context compaction can occur at any time between messages, wiping PDF text from context. If the writes are deferred, the work is lost. The sequence within a single message must be: (1) bbox, (2) create/update roam file, (3) insert cite+transclude into thesis.org. All three steps must complete before moving on to the next paper.
 
-### 3.5a. Read roam file and check for local PDF
+### 3.5a. Read roam file and check for a local source
+
+Source attachments live recursively under `~/org/sources/`; the root is an
+inbox. Resolve each entry's actual `file` field rather than assuming a flat
+filename. For EPUBs, use `citation-add/inspect_epub.py <file> --text` to read
+metadata and sections. Record verified quotations with chapter/section
+locations, without fabricated PDF page numbers or HIGHLIGHT coordinates.
+The PDF page, OCR, and bbox steps below apply only to PDFs. A source may have
+both PDF and EPUB attachments; preserve both formats.
 
 **First:** check if `~/org/roam/refs/<citekey>.org` exists and read it. Scan all existing `citation-hunt annotations` subheadings for passages that already match the current claim. If a match exists:
 - Reuse the existing annotation (cite key + heading) immediately - emit the `[cite:]` and `#+transclude:` block into thesis.org right away
@@ -322,7 +330,7 @@ For each citekey, create the roam ref file if needed, then add one subheading pe
    python3 ~/.agents/skills/citation-hunt/create_ref.py \
      --citekey <key> \
      --title "<title from bib>" \
-     --pdf "<file from bib>"
+     --file "<one resolved PDF or EPUB attachment path>"
    ```
 3. For each passage, run bbox.py to write the green highlight and get coordinates:
    ```bash
@@ -430,7 +438,7 @@ Skip papers already in `~/org/bib/references.bib` (they were already scanned in 
 
 Read `~/.agents/skills/citation-hunt/sources.md`. Try each source in the listed order.
 
-For each flagged upstream reference not already in `~/org/pdfs/`:
+For each flagged upstream reference not already in `~/org/sources/`:
 1. Work through the sources in `sources.md` in order until a PDF is found or all are exhausted
 2. Do NOT attempt paywalled downloads (IEEE Xplore, ACM DL, Springer without open access)
 3. If found via a source not in `sources.md`, append it to the "Additional sources found during hunting" section of `sources.md`
@@ -458,7 +466,7 @@ Upstream candidates found:
     - ...
 
 Actions if approved:
-  - Download N PDFs to ~/org/pdfs/
+  - Download N PDFs to ~/org/sources/
   - Run /citation-add to generate bib entries
   - Re-run passage search on new papers
 
@@ -470,13 +478,13 @@ Approve downloads? List any to skip.
 ### 4e. Fetch approved PDFs and process
 
 For each approved candidate with a found PDF URL:
-1. Download to `~/org/pdfs/` using curl:
+1. Download to `~/org/sources/` using curl:
    ```bash
-   curl -L "<url>" -o "~/org/pdfs/<authorYEARkeyword>.pdf"
+   curl -L "<url>" -o "$HOME/org/sources/<authorYEARkeyword>.pdf"
    ```
 2. Verify the file is a valid PDF:
    ```bash
-   pdfinfo ~/org/pdfs/<filename>.pdf 2>/dev/null | head -3
+   pdfinfo ~/org/sources/<filename>.pdf 2>/dev/null | head -3
    ```
 3. If verification fails, delete the file and report as failed.
 
@@ -626,7 +634,7 @@ rm ~/.cache/citation-hunt/scratch/<slug>.org
 - Never cite a survey paper for a claim that the survey itself attributes to a primary source - flag it and suggest the primary source instead.
 - Never invent DOIs, URLs, or quotes. If you can't find a direct quote from the abstract supporting the claim, say so.
 - Never download from paywalled sources.
-- The verbatim abstract requirement is enforced by `/citation-add`, not this skill - just get the PDFs into `~/org/pdfs/`.
+- The verbatim abstract requirement is enforced by `/citation-add`, not this skill - just get the PDFs into `~/org/sources/`.
 - Process every claim regardless of whether it already has a citation. The goal is the best possible citation, not just any citation.
 - The scratch file is the source of truth across phases. When in doubt, re-read it rather than reconstructing from context.
 - A candidate from world knowledge with `medium` or `low` confidence must be flagged as unverified in the final report. Never emit a `[cite:]` for an unverified paper.

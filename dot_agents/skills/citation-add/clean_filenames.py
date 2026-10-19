@@ -1,60 +1,49 @@
 #!/usr/bin/env python3
-"""
-Strip Anna's Archive suffixes and trailing UUIDs from PDF filenames in ~/org/pdfs/.
+"""Clean download suffixes on uncataloged PDF/EPUB filenames, recursively.
 
-Patterns removed (from the stem, working right-to-left):
-  " -- <anything> -- Anna's Archive"   (greedy, catches doi slugs before the UUID)
-  " -- Anna's Archive"                 (standalone label)
-  " -- <hex32>"                        (bare 32-char hex UUID with no label)
-
-Dry-run by default. Pass --apply to actually rename.
+Known attachments are left alone so their bibliography and annotation paths
+stay valid. Dry-run by default; --apply renames within each current directory.
 """
-import re
-import os
-import glob
 import argparse
+from pathlib import Path
+import re
 
-pdfs_dir = os.path.expanduser("~/org/pdfs/")
+from source_library import BIB_PATH, SOURCE_ROOT, catalog_files, read_entries, source_files
 
-ANNAS = r"Anna\u2019s Archive|Anna's Archive"  # U+2019 right single quote or ASCII
+ANNAS = r"Anna\u2019s Archive|Anna's Archive"
 
-def clean_stem(stem: str) -> str:
-    # Remove " -- <anything> -- Anna's Archive" (handles doi-slug + uuid before label)
-    stem = re.sub(r"\s*--\s*.+--\s*(?:" + ANNAS + r")\s*$", "", stem, flags=re.IGNORECASE)
-    # Remove standalone " -- Anna's Archive"
-    stem = re.sub(r"\s*--\s*(?:" + ANNAS + r")\s*$", "", stem, flags=re.IGNORECASE)
-    # Remove trailing bare UUID " -- <hex32>"
-    stem = re.sub(r"\s*--\s*[0-9a-f]{32}\s*$", "", stem, flags=re.IGNORECASE)
+
+def clean_stem(stem):
+    stem = re.sub(r"\s*--\s*.+--\s*(?:" + ANNAS + r")\s*$", "", stem, flags=re.I)
+    stem = re.sub(r"\s*--\s*(?:" + ANNAS + r")\s*$", "", stem, flags=re.I)
+    stem = re.sub(r"\s*--\s*[0-9a-f]{32}\s*$", "", stem, flags=re.I)
     return stem.strip()
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--apply", action="store_true", help="Actually rename files (default: dry-run)")
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, default=SOURCE_ROOT)
+    parser.add_argument("--bib", type=Path, default=BIB_PATH)
+    parser.add_argument("--apply", action="store_true")
     args = parser.parse_args()
+    indexed = catalog_files(read_entries(args.bib), args.bib, args.root)
+    renamed = proposed = 0
+    for path in source_files(args.root):
+        if path.resolve() in indexed:
+            continue
+        name = clean_stem(path.stem)
+        if not name or name == path.stem:
+            continue
+        destination = path.with_name(name + path.suffix)
+        proposed += 1
+        print(f"{path} -> {destination}")
+        if destination.exists():
+            print("SKIPPED: target already exists")
+        elif args.apply:
+            path.rename(destination)
+            renamed += 1
+    print(f"{renamed} file(s) renamed." if args.apply else f"{proposed} file(s) would be renamed. Pass --apply to rename.")
 
-    changes = []
-    for path in sorted(glob.glob(os.path.join(pdfs_dir, "*.pdf"))):
-        old_name = os.path.basename(path)
-        stem, ext = os.path.splitext(old_name)
-        new_stem = clean_stem(stem)
-        new_name = new_stem + ext
-        if new_name != old_name:
-            changes.append((path, old_name, new_name))
 
-    if not changes:
-        print("Nothing to rename.")
-    else:
-        for path, old, new in changes:
-            print(f"  {old}")
-            print(f"→ {new}")
-            print()
-            if args.apply:
-                new_path = os.path.join(pdfs_dir, new)
-                if os.path.exists(new_path):
-                    print(f"  SKIPPED (target already exists)")
-                else:
-                    os.rename(path, new_path)
-        if not args.apply:
-            print(f"{len(changes)} file(s) would be renamed. Pass --apply to rename.")
-        else:
-            print(f"{len(changes)} file(s) renamed.")
+if __name__ == "__main__":
+    main()

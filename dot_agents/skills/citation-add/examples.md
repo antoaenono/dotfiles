@@ -27,7 +27,7 @@ text. Summaries belong in `annote`, which the site shows as "Brief".
   year      = {2026},
   keywords  = {sycophancy, llm, belief-updating, confirmation-bias, epistemic-risk},
   abstract  = {<the work's own abstract, copied verbatim and complete>},
-  file      = {~/org/pdfs/sycophantic-ai-effects-2602.14270v1.pdf},
+  file      = {~/org/sources/papers/sycophantic-ai-effects-2602.14270v1.pdf},
   doi       = {10.48550/arXiv.2602.14270}
 }
 ```
@@ -54,7 +54,7 @@ preserve the information without triggering a validation warning.
   note      = {Publisher: Elsevier},
   keywords  = {mental-workload, nasa-tlx, hci, cognitive-load, measurement},
   abstract  = {<the work's own abstract, copied verbatim and complete>},
-  file      = {~/org/pdfs/1-s2.0-S1071581925000722-main.pdf},
+  file      = {~/org/sources/papers/1-s2.0-S1071581925000722-main.pdf},
   doi       = {10.1016/j.ijhcs.2025.103515}
 }
 ```
@@ -83,7 +83,7 @@ full conference name in `booktitle`.
   publisher = {IEEE},
   keywords  = {software-architecture, genai, llm, automation, architecture-decisions},
   abstract  = {<the work's own abstract, copied verbatim and complete>},
-  file      = {~/org/pdfs/Will_Generative_AI_Fill_the_Automation_Gap_in_Software_Architecting.pdf},
+  file      = {~/org/sources/papers/Will_Generative_AI_Fill_the_Automation_Gap_in_Software_Architecting.pdf},
   doi       = {10.1109/ICSA-C65153.2025.00014}
 }
 ```
@@ -109,7 +109,7 @@ proceedings title in `booktitle`.
   publisher = {ACM},
   keywords  = {language-models, responsible-ai, risk-taxonomy, safety, ethics},
   abstract  = {<the work's own abstract, copied verbatim and complete>},
-  file      = {~/org/pdfs/3531146.3533088.pdf},
+  file      = {~/org/sources/papers/3531146.3533088.pdf},
   doi       = {10.1145/3531146.3533088}
 }
 ```
@@ -134,7 +134,7 @@ no publisher in the traditional sense. Use the conference short name (e.g.
   year      = {2024},
   keywords  = {sycophancy, llm, rlhf, human-feedback, alignment},
   abstract  = {<the work's own abstract, copied verbatim and complete>},
-  file      = {~/org/pdfs/2310.13548v4.pdf},
+  file      = {~/org/sources/papers/2310.13548v4.pdf},
   doi       = {10.48550/arXiv.2310.13548}
 }
 ```
@@ -158,7 +158,7 @@ read - do not guess it.
   keywords  = {cognitive-surrender, dual-process, human-ai-interaction,
                reasoning, tri-system-theory},
   abstract  = {<the work's own abstract, copied verbatim and complete>},
-  file      = {~/org/pdfs/ssrn-6097646.pdf}
+  file      = {~/org/sources/ssrn-6097646.pdf}
 }
 ```
 
@@ -198,7 +198,7 @@ Omit `abstract` entirely. Omit `doi` unless a DOI is printed in the book itself.
   year      = {2010},
   keywords  = {continuous-delivery, continuous-integration, deployment, build-automation, devops},
   note      = {ISBN: 978-0-321-60191-9},
-  file      = {~/org/pdfs/Continuous Delivery_ Reliable Software Releases through -- Humble, Jez & Farley, David.pdf}
+  file      = {~/org/sources/books/Continuous Delivery_ Reliable Software Releases through -- Humble, Jez & Farley, David.pdf}
 }
 ```
 
@@ -224,7 +224,7 @@ or paraphrase. Omit `doi` if not found on pages read.
   pages     = {70--75},
   year      = {2004},
   keywords  = {choice, decision-making, cognitive-load, paradox-of-choice, well-being},
-  file      = {~/org/pdfs/schwartz2004tyranny-of-choice.pdf}
+  file      = {~/org/sources/papers/schwartz2004tyranny-of-choice.pdf}
 }
 ```
 
@@ -249,6 +249,6 @@ for `@techreport`, or to `note` for `@misc`.
   note        = {Lingenic LLC},
   keywords    = {pseudocode, knowledge-representation, formal-systems, notation, llm},
   abstract    = {<the work's own abstract, copied verbatim and complete>},
-  file        = {~/org/pdfs/knuth-pseudocode-generalization.pdf}
+  file        = {~/org/sources/knuth-pseudocode-generalization.pdf}
 }
 ```
