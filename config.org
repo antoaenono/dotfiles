@@ -1869,6 +1869,19 @@ brew "ffmpeg"
 #+begin_src ruby :tangle ./Brewfile
 cask "espanso"
 #+end_src
+#+begin_src shell :tangle "./.chezmoiscripts/darwin/run_onchange_after_06-enable-espanso.sh" :shebang "#!/bin/bash"
+set -e
+espanso_bin="/Applications/Espanso.app/Contents/MacOS/espanso"
+
+# Espanso manages its own macOS LaunchAgent for starting at login.
+if ! "$espanso_bin" service check >/dev/null 2>&1; then
+    "$espanso_bin" service register
+fi
+
+if ! "$espanso_bin" status >/dev/null 2>&1; then
+    "$espanso_bin" start
+fi
+#+end_src
 
 On first install, espanso defaults to =~/Library/Application Support/espanso=.
 Move it so chezmoi can manage it via =~/.config/espanso=:
