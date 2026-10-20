@@ -1126,7 +1126,7 @@ launcher.
           ("r" "Reading Note" entry (file+headline "~/org/inbox.org" "Reading")
            "* %^{Title}\n%U\n%?\n")
           ("p" "Person" entry (file "~/org/contacts.org")
-           "* %^{Name} :contact:\n:PROPERTIES:\n:ID: %(org-id-new)\n:NICKNAME: %^{Nickname}\n:PRIVATE: true\n:END:\n%?\n"))))
+           "* %^{Name} :contact:\n:PROPERTIES:\n:ID: %(org-id-new)\n:NICKNAME: %^{Nickname}\n:PHONE: %^{Phone}\n:EMAIL: %^{Email}\n:BIRTHDAY: %^{Birthday (YYYY-MM-DD)}\n:PRIVATE: true\n:END:\n%?\n"))))
 
 (autoload 'my/org-weekly-do-drafts
   (expand-file-name "lisp/org-journal-weekly.el" doom-user-dir) nil t)
