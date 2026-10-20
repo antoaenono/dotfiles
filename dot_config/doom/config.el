@@ -383,7 +383,7 @@
           ("r" "Reading Note" entry (file+headline "~/org/inbox.org" "Reading")
            "* %^{Title}\n%U\n%?\n")
           ("p" "Person" entry (file "~/org/roam/contacts.org")
-           "* %^{Name} :contact:\n:PROPERTIES:\n:ID: %(org-id-new)\n:NICKNAME: %^{Nickname}\n:PHONE: %^{Phone}\n:EMAIL: %^{Email}\n:WEBSITE: %^{Website}\n:BIRTHDAY: %^{Birthday (YYYY-MM-DD)}\n:NOTE: %^{Note}\n:PRIVATE: true\n:END:\n%?\n"))))
+           "* %^{Name} :contact:\n:PROPERTIES:\n:ID: %(org-id-new)\n:NICKNAME: %^{Nickname}\n:PHONE: %^{Phone}\n:EMAIL: %^{Email}\n:WEBSITE: %^{Website}\n:BIRTHDAY: %^{Birthday (YYYY-MM-DD)}\n:DESCRIPTION: %^{Public description}\n:NOTE: %^{Private note}\n:PRIVATE: true\n:END:\n%?\n"))))
 
 (autoload 'my/org-weekly-do-drafts
   (expand-file-name "lisp/org-journal-weekly.el" doom-user-dir) nil t)
