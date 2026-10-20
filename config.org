@@ -1126,7 +1126,10 @@ launcher.
           ("r" "Reading Note" entry (file+headline "~/org/inbox.org" "Reading")
            "* %^{Title}\n%U\n%?\n")
           ("p" "Person" entry (file "~/org/contacts.org")
-           "* %^{Name} :contact:\n:PROPERTIES:\n:ID: %(org-id-new)\n:NICKNAME: %^{Nickname}\n:PRIVATE: true\n:END:\n%?\n"))))
+           "* %^{Name} :contact:\n:PROPERTIES:\n:ID: %(org-id-new)\n:NICKNAME: %^{Nickname}\n:PRIVATE: true\n:END:\n%?\n")))
+  (load! "lisp/org-journal-weekly")
+  (add-to-list 'org-capture-templates (my/org-journal-capture-template) t)
+  (map! :leader :desc "Catch up weekly Do drafts" "n w" #'my/org-weekly-do-drafts))
 
 ;; REFILE
 (after! org
@@ -1243,6 +1246,328 @@ launcher.
   ;; Note: difftastic lands in doom's bottom popup (small). Press `C-w _` to
   ;; maximize the window vertically, or `C-w o` to fill the frame.
   )
+#+end_src
+
+#+begin_src emacs-lisp :tangle "./dot_config/doom/lisp/org-journal-weekly.el"
+;;; org-journal-weekly.el --- Private journal to weekly drafts -*- lexical-binding: t; -*-
+
+(require 'org)
+(require 'calendar)
+(require 'cal-iso)
+
+(defvar my/org-journal-file "~/org/journal.org"
+  "Private, single-file journal with a year/week/day date tree.")
+
+(defvar my/org-weekly-do-directory "~/org/time/week/do/"
+  "Directory for editable weekly Do drafts.")
+
+(defun my/org-journal-capture-template ()
+  "Return the native date-tree capture template for the private journal."
+  `("j" "Journal" entry (file+olp+datetree ,my/org-journal-file)
+    "* %<%H:%M> %?\n" :tree-type week :empty-lines 1))
+
+(defun my/org-journal--week-monday (heading)
+  "Return the Monday of a native ISO week HEADING as an absolute date."
+  (let ((title (org-element-property :raw-value heading)))
+    (when (and (= (org-element-property :level heading) 2)
+               (string-match
+                "\\`\\([0-9]\\{4\\}\\)-W\\([0-9]\\{2\\}\\)\\'"
+                title))
+      (let* ((iso (list (string-to-number (match-string 2 title)) 1
+                        (string-to-number (match-string 1 title))))
+             (monday (calendar-iso-to-absolute iso)))
+        (when (equal iso (calendar-iso-from-absolute monday)) monday)))))
+
+(defun my/org-journal--weeks (current-monday)
+  "Return completed week subtrees paired with their absolute Monday dates.
+Include unsaved journal edits without modifying the source buffer, its
+narrowing, or the file on disk.  Exclude CURRENT-MONDAY and later weeks."
+  (let* ((journal (expand-file-name my/org-journal-file))
+         (source-buffer (find-buffer-visiting journal))
+         entries)
+    (with-temp-buffer
+      (if source-buffer
+          (insert (with-current-buffer source-buffer
+                    (save-restriction
+                      (widen)
+                      (buffer-substring-no-properties (point-min) (point-max)))))
+        (insert-file-contents journal))
+      (delay-mode-hooks (org-mode))
+      (org-element-map (org-element-parse-buffer) 'headline
+        (lambda (heading)
+          (let ((monday (my/org-journal--week-monday heading)))
+            (when (and monday (< monday current-monday))
+              (push (cons monday (buffer-substring-no-properties
+                                  (org-element-property :begin heading)
+                                  (org-element-property :end heading)))
+                    entries))))))
+    (sort entries (lambda (a b) (< (car a) (car b))))))
+
+(defun my/org-journal--weekly-body (text)
+  "Copy week subtree TEXT for a draft, preserving its local file links.
+Drop the week heading and empty days, promote days to level one, and remove
+copied global IDs.  Keep the journal's IDs and copied file-local CUSTOM_IDs."
+  (with-temp-buffer
+    (insert text)
+    (delay-mode-hooks (org-mode))
+    (let ((source-directory (file-name-directory
+                             (expand-file-name my/org-journal-file)))
+          (org-odd-levels-only nil)
+          (org-adapt-indentation nil))
+      (org-map-entries (lambda () (org-entry-delete nil "ID")))
+      (dolist (heading (reverse (org-element-map (org-element-parse-buffer)
+                                   'headline #'identity)))
+        (when (and (= (org-element-property :level heading) 3)
+                   (not (org-element-contents heading)))
+          (delete-region (org-element-property :begin heading)
+                         (org-element-property :end heading))))
+      (goto-char (point-min))
+      (delete-region (point-min) (line-beginning-position 2))
+      (org-map-entries (lambda () (dotimes (_ 2) (org-promote))))
+      ;; Parse links so examples and code blocks are left alone.  Edit from
+      ;; the end to keep earlier element positions valid.
+      (dolist (link (reverse (org-element-map (org-element-parse-buffer)
+                                'link #'identity)))
+        (let ((path (org-element-property :path link)))
+          (when (and (equal (org-element-property :type link) "file")
+                     (not (file-name-absolute-p path)))
+            (let* ((begin (org-element-property :begin link))
+                   (end (- (org-element-property :end link)
+                           (org-element-property :post-blank link)))
+                   (description-begin (org-element-property :contents-begin link))
+                   (description (and description-begin
+                                     (buffer-substring-no-properties
+                                      description-begin
+                                      (org-element-property :contents-end link))))
+                   (application (org-element-property :application link))
+                   (search (org-element-property :search-option link))
+                   (target (concat "file" (and application (concat "+" application))
+                                   ":" (expand-file-name path source-directory)
+                                   (and search (concat "::" search)))))
+              (delete-region begin end)
+              (goto-char begin)
+              (insert (org-link-make-string target description)))))))
+    (buffer-string)))
+
+(defun my/org-journal--monday (day)
+  "Return the Monday of the ISO week containing absolute calendar DAY."
+  ;; Calendar represents Sunday as zero, so wrap it back to Monday.
+  (- day (mod (1- (nth 1 (calendar-iso-from-absolute day))) 7)))
+
+(defun my/org-journal--write-week (monday text)
+  "Write a missing weekly draft for MONDAY from week subtree TEXT.
+Return its path when created, otherwise nil.  Never replace an existing
+file or visiting buffer.  Empty weeks produce no file."
+  (let* ((iso (calendar-iso-from-absolute monday))
+         (week (format "%d-W%02d" (nth 2 iso) (car iso)))
+         (destination (expand-file-name (concat week ".org")
+                                        my/org-weekly-do-directory)))
+    (unless (or (file-exists-p destination) (find-buffer-visiting destination))
+      (let ((start (calendar-gregorian-from-absolute monday))
+            (body (my/org-journal--weekly-body text)))
+        (when (string-match-p "\\S-" body)
+          (with-temp-buffer
+            (insert (format "#+TITLE: Week %d, %d\n#+DATE: <%04d-%02d-%02d>\n#+PUBLISH: time\n#+DRAFT: true\n\n"
+                            (car iso) (nth 2 iso) (nth 2 start) (car start) (nth 1 start))
+                    body)
+            (unless (bolp) (insert "\n"))
+            (make-directory (file-name-directory destination) t)
+            ;; Refuse to overwrite even if another process creates it meanwhile.
+            (write-region (point-min) (point-max) destination nil 'silent nil 'excl))
+          destination)))))
+
+(defun my/org-weekly-do-drafts (&optional today)
+  "Create missing Do drafts for every completed week with journal entries.
+Copy each whole week subtree into an individual Org file with DRAFT: true.  Skip
+empty days, the current Monday-Sunday week, future weeks, and all existing
+weekly files or visiting buffers.  Return newly created paths in date order.
+When interactive, open the most recent new draft.  TODAY is an optional
+date string for calculating which weeks are complete; default to today."
+  (interactive)
+  (let* ((decoded (decode-time (if today (org-read-date nil t today) (current-time))))
+         (current-monday
+          (my/org-journal--monday
+           (calendar-absolute-from-gregorian
+            (list (nth 4 decoded) (nth 3 decoded) (nth 5 decoded)))))
+         (weeks (my/org-journal--weeks current-monday))
+         created)
+    (dolist (week weeks)
+      (let ((file (my/org-journal--write-week (car week) (cdr week))))
+        (when file (push file created))))
+    (setq created (nreverse created))
+    (when (called-interactively-p 'interactive)
+      (if created
+          (progn
+            (find-file (car (last created)))
+            (message "Created %d weekly Do draft(s); opened the latest" (length created)))
+        (message "No missing completed weeks with journal entries")))
+    created))
+
+(provide 'org-journal-weekly)
+;;; org-journal-weekly.el ends here
+#+end_src
+
+#+begin_src emacs-lisp :tangle "./dot_config/doom/test/org-journal-weekly-tests.el"
+;;; org-journal-weekly-tests.el --- Journal workflow tests -*- lexical-binding: t; -*-
+
+(require 'cl-lib)
+(require 'ert)
+(require 'org-capture)
+(load (expand-file-name "../lisp/org-journal-weekly.el"
+                        (file-name-directory (or load-file-name buffer-file-name)))
+      nil t)
+
+(defmacro my/org-journal-test--with-files (journal &rest body)
+  "Run BODY with a temporary JOURNAL and weekly output directory."
+  (declare (indent 1))
+  `(let* ((directory (make-temp-file "org-journal-test-" t))
+          (my/org-journal-file (expand-file-name "journal.org" directory))
+          (my/org-weekly-do-directory (expand-file-name "week/do/" directory))
+          (org-capture-bookmark nil)
+          (org-inhibit-startup t))
+     (unwind-protect
+         (progn
+           (with-temp-file my/org-journal-file (insert ,journal))
+           ,@body)
+       (dolist (buffer (buffer-list))
+         (when (and (buffer-file-name buffer)
+                    (file-in-directory-p (buffer-file-name buffer) directory))
+           (with-current-buffer buffer (set-buffer-modified-p nil))
+           (kill-buffer buffer)))
+       (delete-directory directory t))))
+
+(defun my/org-journal-test--read (file)
+  "Read FILE without visiting it."
+  (with-temp-buffer (insert-file-contents file) (buffer-string)))
+
+(ert-deftest my/org-weekly-do-default-never-prompts ()
+  (my/org-journal-test--with-files "#+TITLE: Journal\n"
+    (cl-letf (((symbol-function 'read-from-minibuffer)
+               (lambda (&rest _) (ert-fail "Weekly catch-up prompted for input"))))
+      (should-not (my/org-weekly-do-drafts)))
+    (should-not (file-exists-p my/org-weekly-do-directory))))
+
+(ert-deftest my/org-journal-capture-uses-one-date-tree ()
+  (my/org-journal-test--with-files
+      "#+TITLE: Journal\n* 2026\n** 2026-W43\n*** 2026-10-20 Tuesday\n"
+    (let ((org-capture-templates (list (my/org-journal-capture-template))))
+      (save-window-excursion
+        (dolist (text '("First entry\nSomething I did" "Second entry\nA personal thought"))
+          (let ((org-overriding-default-time (encode-time 0 30 13 20 10 2026)))
+            (org-capture nil "j")
+            (insert text)
+            (org-capture-finalize)))))
+    (let ((text (my/org-journal-test--read my/org-journal-file)))
+      (should (string-match-p "^\\* 2026$" text))
+      (should (string-match-p "^\\*\\* 2026-W43$" text))
+      (should (= 1 (with-temp-buffer
+                     (insert text)
+                     (count-matches "^\\*\\*\\* 2026-10-20 " (point-min) (point-max)))))
+      (should (string-match-p "^\\*\\*\\*\\* 13:30 First entry" text))
+      (should (string-match-p "^\\*\\*\\*\\* 13:30 Second entry" text))
+      (should-not (string-match-p "#\\+PUBLISH:" text)))))
+
+(ert-deftest my/org-weekly-do-copies-whole-iso-week-as-draft ()
+  (let ((journal
+         (concat "#+TITLE: Journal\n* 2020\n** 2020-W52\n"
+                 "*** 2020-12-27 Sunday\nPrevious week\n** 2020-W53\n"
+                 ":PROPERTIES:\n:ID: original-week\n:END:\nWeek-level reflection\n"
+                 "*** 2020-12-28 Monday\n:PROPERTIES:\n:ID: original-day\n:END:\n"
+                 "Text before any Do heading\n**** 09:00 Walk\n:PROPERTIES:\n"
+                 ":ID: original-entry\n:CUSTOM_ID: walk\n:END:\nPersonal thoughts\n"
+                 "***** Details\n[[file:images/a\\[b\\].png][A photo]] and "
+                 "[[file:notes.org::#topic][Notes]]\nfile:other.pdf\n"
+                 "#+begin_example\n:ID: example-text\n[[file:untouched.pdf]]\n#+end_example\n"
+                 "*** 2020-12-29 Tuesday\n\n*** 2021-01-03 Sunday\nLast day included\n"
+                 "* 2021\n** 2021-W01\n*** 2021-01-04 Monday\nNext week\n")))
+    (my/org-journal-test--with-files journal
+      (let* ((drafts (my/org-weekly-do-drafts "2021-01-04"))
+             (draft (car (last drafts)))
+             (text (my/org-journal-test--read draft)))
+        (should (equal (mapcar #'file-name-nondirectory drafts)
+                       '("2020-W52.org" "2020-W53.org")))
+        (should (equal (file-name-nondirectory draft) "2020-W53.org"))
+        (dolist (pattern '("^#\\+TITLE: Week 53, 2020$"
+                           "^#\\+DRAFT: true$" "^#\\+PUBLISH: time$"
+                           "^#\\+DATE: <2020-12-28>$" "^\\* 2020-12-28 Monday$"
+                           "^\\* 2021-01-03 Sunday$" "Text before any Do heading"
+                           "Week-level reflection" "Personal thoughts" "^\\*\\*\\* Details$"
+                           ":CUSTOM_ID: walk" ":ID: example-text"
+                           "\\[\\[file:untouched.pdf\\]\\]"))
+          (should (string-match-p pattern text)))
+        (should-not (string-match-p "Previous week\\|Next week\\|:ID: original-\\|2020-12-29" text))
+        (with-temp-buffer
+          (insert text)
+          (org-mode)
+          (let ((links (org-element-map (org-element-parse-buffer) 'link #'identity)))
+            (should (equal (org-element-property :path (nth 0 links))
+                           (expand-file-name "images/a[b].png" directory)))
+            (should (equal (org-element-property :path (nth 1 links))
+                           (expand-file-name "notes.org" directory)))
+            (should (equal (org-element-property :search-option (nth 1 links)) "#topic"))
+            (should (equal (org-element-property :path (nth 2 links))
+                           (expand-file-name "other.pdf" directory)))))
+        (should (equal journal (my/org-journal-test--read my/org-journal-file)))
+        (should-not (my/org-weekly-do-drafts "2021-01-04"))))))
+
+(ert-deftest my/org-weekly-do-preserves-existing-draft ()
+  (my/org-journal-test--with-files
+      "* 2026\n** 2026-W43\n*** 2026-10-20 Tuesday\nThings I did\n"
+    (let ((file (expand-file-name "2026-W43.org" my/org-weekly-do-directory)))
+      (make-directory my/org-weekly-do-directory t)
+      (with-temp-file file (insert "My edited weekly note\n#+DRAFT: false\n"))
+      (should-not (my/org-weekly-do-drafts "2026-10-26"))
+      (should (equal (my/org-journal-test--read file)
+                     "My edited weekly note\n#+DRAFT: false\n")))))
+
+(ert-deftest my/org-weekly-do-preserves-unsaved-draft ()
+  (my/org-journal-test--with-files
+      "* 2026\n** 2026-W43\n*** 2026-10-20 Tuesday\nThings I did\n"
+    (make-directory my/org-weekly-do-directory t)
+    (let* ((file (expand-file-name "2026-W43.org" my/org-weekly-do-directory))
+           (buffer (find-file-noselect file)))
+      (with-current-buffer buffer (insert "Work in progress"))
+      (should-not (my/org-weekly-do-drafts "2026-10-26"))
+      (should-not (file-exists-p file))
+      (should (equal (with-current-buffer buffer (buffer-string)) "Work in progress")))))
+
+(ert-deftest my/org-weekly-do-includes-unsaved-journal-without-changing-it ()
+  (let ((journal "* 2026\n** 2026-W43\n*** 2026-10-20 Tuesday\nSaved text\n"))
+    (my/org-journal-test--with-files journal
+      (let ((buffer (find-file-noselect my/org-journal-file)))
+        (with-current-buffer buffer
+          (goto-char (point-max))
+          (insert "Unsaved personal thought\n")
+          (narrow-to-region (- (point-max) 10) (point-max))
+          (let* ((minimum (point-min))
+                 (position (point))
+                 (draft (car (my/org-weekly-do-drafts "2026-10-26"))))
+            (should (string-match-p "Unsaved personal thought"
+                                    (my/org-journal-test--read draft)))
+            (should (buffer-modified-p))
+            (should (= (point-min) minimum))
+            (should (= (point) position)))))
+      (should (equal journal (my/org-journal-test--read my/org-journal-file))))))
+
+(ert-deftest my/org-weekly-do-empty-week-creates-nothing ()
+  (my/org-journal-test--with-files
+      "* 2026\n** 2026-W42\n*** 2026-10-18 Sunday\n\n** 2026-W43\n*** 2026-10-19 Monday\n  \n"
+    (should-not (my/org-weekly-do-drafts "2026-10-26"))
+    (should-not (file-exists-p my/org-weekly-do-directory))))
+
+(ert-deftest my/org-weekly-do-waits-until-the-following-monday ()
+  (my/org-journal-test--with-files
+      "* 2026\n** 2026-W43\n*** 2026-10-20 Tuesday\nTuesday notes\n*** 2026-10-25 Sunday\nSunday notes\n** 2026-W44\n*** 2026-10-26 Monday\nNext week's notes\n"
+    (should-not (my/org-weekly-do-drafts "2026-10-25"))
+    (should-not (file-exists-p my/org-weekly-do-directory))
+    (let* ((drafts (my/org-weekly-do-drafts "2026-10-26"))
+           (text (my/org-journal-test--read (car drafts))))
+      (should (equal (mapcar #'file-name-nondirectory drafts) '("2026-W43.org")))
+      (should (string-match-p "Tuesday notes" text))
+      (should (string-match-p "Sunday notes" text))
+      (should-not (string-match-p "Next week's notes" text)))))
+
+;;; org-journal-weekly-tests.el ends here
 #+end_src
 
 Brewfile entry for the =difft= binary used by =difftastic.el=.

@@ -375,7 +375,10 @@
           ("r" "Reading Note" entry (file+headline "~/org/inbox.org" "Reading")
            "* %^{Title}\n%U\n%?\n")
           ("p" "Person" entry (file "~/org/contacts.org")
-           "* %^{Name} :contact:\n:PROPERTIES:\n:ID: %(org-id-new)\n:NICKNAME: %^{Nickname}\n:PRIVATE: true\n:END:\n%?\n"))))
+           "* %^{Name} :contact:\n:PROPERTIES:\n:ID: %(org-id-new)\n:NICKNAME: %^{Nickname}\n:PRIVATE: true\n:END:\n%?\n")))
+  (load! "lisp/org-journal-weekly")
+  (add-to-list 'org-capture-templates (my/org-journal-capture-template) t)
+  (map! :leader :desc "Catch up weekly Do drafts" "n w" #'my/org-weekly-do-drafts))
 
 ;; REFILE
 (after! org
