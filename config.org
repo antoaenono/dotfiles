@@ -1034,7 +1034,7 @@ launcher.
 (use-package! org-contacts
   :after org
   :config
-  (setq org-contacts-files '("~/org/contacts.org")
+  (setq org-contacts-files '("~/org/roam/contacts.org")
         org-contacts-matcher "contact"
         org-contacts-tag "contact")
   (add-to-list 'org-tags-exclude-from-inheritance "contact")
@@ -1125,7 +1125,7 @@ launcher.
            "* %?\n%U\n")
           ("r" "Reading Note" entry (file+headline "~/org/inbox.org" "Reading")
            "* %^{Title}\n%U\n%?\n")
-          ("p" "Person" entry (file "~/org/contacts.org")
+          ("p" "Person" entry (file "~/org/roam/contacts.org")
            "* %^{Name} :contact:\n:PROPERTIES:\n:ID: %(org-id-new)\n:NICKNAME: %^{Nickname}\n:PHONE: %^{Phone}\n:EMAIL: %^{Email}\n:WEBSITE: %^{Website}\n:BIRTHDAY: %^{Birthday (YYYY-MM-DD)}\n:NOTE: %^{Note}\n:PRIVATE: true\n:END:\n%?\n"))))
 
 (autoload 'my/org-weekly-do-drafts
