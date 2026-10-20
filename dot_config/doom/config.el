@@ -232,7 +232,7 @@
   (add-to-list 'org-roam-capture-templates
                '("r" "reference" plain "%?"
                  :if-new (file+head "refs/${citar-citekey}.org"
-                                    ":PROPERTIES:\n:NOTER_DOCUMENT: %(my/citar-noter-document \"${citar-citekey}\")\n:END:\n#+title: ${citar-title}\n#+DATE: %<%Y-%m-%d %a>\n#+PUBLISH: garden\n#+DRAFT: true\n")
+                                    ":PROPERTIES:\n:NOTER_DOCUMENT: %(my/citar-noter-document \"${citar-citekey}\")\n:END:\n#+title: ${citar-title}\n#+DATE: %<%Y-%m-%d %a>\n#+PUBLISH: library\n#+DRAFT: true\n")
                  :immediate-finish t
                  :unnarrowed t))
   (setq citar-org-roam-capture-template-key "r"))
@@ -421,9 +421,9 @@
 
 (set-file-template!
  (concat "\\`"
-         (regexp-quote (expand-file-name "~/org/works/"))
+         (regexp-quote (expand-file-name "~/org/play/projects/"))
          ".+\\.org\\'")
- :trigger (lambda () (my/insert-site-file-header "works")))
+ :trigger (lambda () (my/insert-site-file-header "project")))
 
 (set-file-template!
  (concat "\\`"

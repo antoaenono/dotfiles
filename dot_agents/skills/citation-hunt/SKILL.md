@@ -324,6 +324,8 @@ If the retrieved passage fails:
 
 For each citekey, create the roam ref file if needed, then add one subheading per passage found:
 
+New ref files use `#+PUBLISH: library` and `#+DRAFT: true`. Keep them as drafts until the user chooses to publish them; adding citation-hunt annotations does not make a note public. Preserve publication metadata in existing notes.
+
 1. Check if `~/org/roam/refs/<citekey>.org` exists
 2. If not, create it:
    ```bash

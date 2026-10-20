@@ -46,7 +46,7 @@ def main():
 :END:
 #+title: {args.title}
 #+DATE: <{date_str}>
-#+PUBLISH: garden
+#+PUBLISH: library
 #+DRAFT: true
 
 * Summary

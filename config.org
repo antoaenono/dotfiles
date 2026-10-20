@@ -983,7 +983,7 @@ launcher.
   (add-to-list 'org-roam-capture-templates
                '("r" "reference" plain "%?"
                  :if-new (file+head "refs/${citar-citekey}.org"
-                                    ":PROPERTIES:\n:NOTER_DOCUMENT: %(my/citar-noter-document \"${citar-citekey}\")\n:END:\n#+title: ${citar-title}\n#+DATE: %<%Y-%m-%d %a>\n#+PUBLISH: garden\n#+DRAFT: true\n")
+                                    ":PROPERTIES:\n:NOTER_DOCUMENT: %(my/citar-noter-document \"${citar-citekey}\")\n:END:\n#+title: ${citar-title}\n#+DATE: %<%Y-%m-%d %a>\n#+PUBLISH: library\n#+DRAFT: true\n")
                  :immediate-finish t
                  :unnarrowed t))
   (setq citar-org-roam-capture-template-key "r"))
@@ -1172,9 +1172,9 @@ launcher.
 
 (set-file-template!
  (concat "\\`"
-         (regexp-quote (expand-file-name "~/org/works/"))
+         (regexp-quote (expand-file-name "~/org/play/projects/"))
          ".+\\.org\\'")
- :trigger (lambda () (my/insert-site-file-header "works")))
+ :trigger (lambda () (my/insert-site-file-header "project")))
 
 (set-file-template!
  (concat "\\`"
@@ -6701,6 +6701,8 @@ If the retrieved passage fails:
 
 For each citekey, create the roam ref file if needed, then add one subheading per passage found:
 
+New ref files use `#+PUBLISH: library` and `#+DRAFT: true`. Keep them as drafts until the user chooses to publish them; adding citation-hunt annotations does not make a note public. Preserve publication metadata in existing notes.
+
 1. Check if `~/org/roam/refs/<citekey>.org` exists
 2. If not, create it:
    ```bash
@@ -7113,7 +7115,7 @@ def main():
 :END:
 ,#+title: {args.title}
 ,#+DATE: <{date_str}>
-,#+PUBLISH: garden
+,#+PUBLISH: library
 ,#+DRAFT: true
 
 ,* Summary
