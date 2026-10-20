@@ -350,6 +350,14 @@
 
 (map! :leader :desc "Insert contact reference" "n P" #'my/org-insert-contact-link)
 
+;; INSERT ALIASES
+(map! :leader
+      (:prefix "i"
+       :desc "Citation" "c" #'org-cite-insert
+       :desc "Org link" "l" #'org-insert-link
+       :desc "Roam node link" "n" #'org-roam-node-insert
+       :desc "Contact reference (who:)" "w" #'my/org-insert-contact-link))
+
 ;; ORG HEADING FACES (levels 5-8 inherit outline-4/foreground by default)
 (custom-set-faces!
   '(org-level-5 :foreground "#f92672")  ; pink
